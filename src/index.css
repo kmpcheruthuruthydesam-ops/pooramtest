@@ -4,11 +4,11 @@
 
 :root {
   --bg-main: #f8fafc;
-  --bg-card: rgba(255, 255, 255, 0.7);
-  --bg-sidebar: rgba(255, 255, 255, 0.4);
+  --bg-card: rgba(255, 255, 255, 0.4);
+  --bg-sidebar: rgba(255, 255, 255, 0.2);
   --text-main: #1e293b;
   --text-muted: #64748b;
-  --border-card: rgba(255, 255, 255, 0.6);
+  --border-card: rgba(255, 255, 255, 0.5);
 }
 
 .dark {
@@ -73,7 +73,7 @@
 
 @layer components {
   .glass-card {
-    @apply border shadow-[0_8px_32px_0_rgba(31,38,135,0.04)] rounded-3xl backdrop-blur-xl transition-colors duration-300;
+    @apply border shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] rounded-3xl backdrop-blur-2xl transition-colors duration-300;
     background-color: var(--bg-card);
     border-color: var(--border-card);
   }

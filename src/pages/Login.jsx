@@ -43,7 +43,7 @@ const Login = () => {
                 className="w-full max-w-[440px] p-6 relative z-10 text-center"
             >
 
-                <div className="bg-[#e8ebf2] rounded-[40px] p-12 shadow-2xl space-y-8 border border-white/20">
+                <div className="glass-card p-12 shadow-2xl space-y-8">
                     <div className="flex flex-col items-center">
                         <div className="w-20 h-20 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white text-4xl shadow-xl shadow-orange-500/30 mb-6 border-4 border-white/50">
                             🕉

@@ -54,7 +54,7 @@ const Layout = () => {
     };
 
     return (
-        <div className="flex h-screen bg-slate-50 overflow-hidden relative">
+        <div className="flex h-screen bg-transparent overflow-hidden relative">
             <CommandPalette />
             {/* Overlay for mobile sidebar */}
             <AnimatePresence>

@@ -54,7 +54,7 @@ const Sidebar = memo(({ isOpen, setIsOpen }) => {
 
     return (
         <aside className={`
-            w-72 h-screen fixed left-0 top-0 bg-white/70 lg:bg-white/40 backdrop-blur-3xl border-r border-white/60 p-8 flex flex-col z-50
+            w-72 h-screen fixed left-0 top-0 bg-white border-r border-slate-100 p-8 flex flex-col z-50
             transition-transform duration-300 lg:translate-x-0
             ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         `}>
@@ -123,11 +123,11 @@ const Sidebar = memo(({ isOpen, setIsOpen }) => {
                     <LogOut size={22} />
                     {t.logout}
                 </button>
-                <div className="mt-6 p-6 bg-gradient-to-br from-slate-800 to-slate-900 rounded-[24px] text-white overflow-hidden relative group">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 blur-2xl rounded-full -mr-10 -mt-10 group-hover:bg-white/10 transition-colors"></div>
+                <div className="mt-6 p-6 bg-gradient-to-br from-orange-50 to-orange-100/50 rounded-[24px] text-slate-800 overflow-hidden relative group border border-orange-100">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-orange-200/20 blur-2xl rounded-full -mr-10 -mt-10 group-hover:bg-orange-200/30 transition-colors"></div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">{t.this_month_small}</p>
-                    <p className="text-xl font-black text-white mb-2">₹{monthlyTotal.toLocaleString()}</p>
-                    <p className="text-sm font-bold flex items-center gap-2 text-slate-400">
+                    <p className="text-xl font-black text-slate-800 mb-2">₹{monthlyTotal.toLocaleString()}</p>
+                    <p className="text-sm font-bold flex items-center gap-2 text-slate-500">
                         <span className={`w-2 h-2 rounded-full animate-pulse ${pendingCount > 0 ? 'bg-rose-400' : 'bg-emerald-500'}`}></span>
                         {pendingCount > 0 ? `${pendingCount} ${t.pending_small}` : t.all_clear}
                     </p>

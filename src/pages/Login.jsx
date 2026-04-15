@@ -29,7 +29,7 @@ const Login = () => {
     };
 
     return (
-        <div className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#0a1d37] to-[#16213e] font-outfit relative overflow-hidden">
+        <div className="h-screen w-full flex items-center justify-center bg-slate-50 font-outfit relative overflow-hidden">
             {/* Background Texture/Glow */}
             <div className="absolute inset-0 opacity-20">
                 <div className="absolute top-[20%] left-[20%] w-96 h-96 bg-blue-500 rounded-full blur-[120px]"></div>

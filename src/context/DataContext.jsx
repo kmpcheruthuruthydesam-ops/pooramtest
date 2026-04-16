@@ -12,6 +12,7 @@ export const DataProvider = ({ children }) => {
     const { isAuthenticated } = useAuth();
     
     const [devoteeData, setDevoteeData] = useState([]);
+    const [islandTip, setIslandTip] = useState({ show: false, title: '', type: 'system' });
     const [expenses, setExpenses] = useState([]);
     const [expenseCategories, setExpenseCategories] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -19,6 +20,15 @@ export const DataProvider = ({ children }) => {
     const [privacyMode, setPrivacyMode] = useState(() => {
         return localStorage.getItem('temple_crm_privacy') === 'true';
     });
+
+    const [debugMode, setDebugMode] = useState(() => {
+        return localStorage.getItem('temple_crm_debug') === 'true';
+    });
+
+    const notifyIsland = (title, type = 'system') => {
+        setIslandTip({ show: true, title, type });
+        setTimeout(() => setIslandTip(prev => ({ ...prev, show: false })), 4000);
+    };
 
     // Fetch all data from Supabase on mount or authentication change
     useEffect(() => {
@@ -58,16 +68,21 @@ export const DataProvider = ({ children }) => {
 
         if (!error && data) {
             // Map table names back to the camelCase used in the UI
-            const formatted = data.map(d => ({
-                ...d,
-                totalExpected: d.total_expected,
-                totalPaid: d.total_paid,
-                totalPending: d.total_pending,
-                events: (d.events || []).map(e => ({
+            const formatted = data.map(d => {
+                const events = (d.events || []).map(e => ({
                     ...e,
                     isNirapara: e.is_nirapara
-                })).sort((a, b) => new Date(b.date) - new Date(a.date))
-            }));
+                })).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                return {
+                    ...d,
+                    totalExpected: d.total_expected,
+                    totalPaid: d.total_paid,
+                    totalPending: d.total_pending,
+                    events,
+                    isNirapara: events.some(e => e.isNirapara)
+                };
+            });
             setDevoteeData(formatted);
         }
     };
@@ -91,6 +106,14 @@ export const DataProvider = ({ children }) => {
         setPrivacyMode(prev => {
             const next = !prev;
             localStorage.setItem('temple_crm_privacy', String(next));
+            return next;
+        });
+    };
+
+    const toggleDebugMode = () => {
+        setDebugMode(prev => {
+            const next = !prev;
+            localStorage.setItem('temple_crm_debug', String(next));
             return next;
         });
     };
@@ -122,6 +145,7 @@ export const DataProvider = ({ children }) => {
             return;
         }
         setDevoteeData(prev => [{ ...data, events: [] }, ...prev]);
+        notifyIsland('Devotee Added', 'success');
     };
 
     const updateDevotee = async (updated) => {
@@ -145,7 +169,17 @@ export const DataProvider = ({ children }) => {
         }
 
         // 2. Sync events (collections)
-        // For simplicity in this CRM, we'll upsert all events for this devotee
+        // We need to upsert changed ones AND delete removed ones
+        const currentDevotee = devoteeData.find(d => d.id === updated.id);
+        const currentEventIds = (currentDevotee?.events || []).map(e => e.id);
+        const updatedEventIds = (updated.events || []).map(e => e.id);
+        
+        // Find IDs that were removed
+        const deletedIds = currentEventIds.filter(id => !updatedEventIds.includes(id));
+        if (deletedIds.length > 0) {
+            await supabase.from('collections').delete().in('id', deletedIds);
+        }
+
         const eventsToSync = (updated.events || []).map(e => ({
             id: e.id,
             devotee_id: updated.id,
@@ -184,6 +218,7 @@ export const DataProvider = ({ children }) => {
             return;
         }
         setExpenses(prev => [expense, ...prev]);
+        notifyIsland('Expense Logged', 'expense');
     };
 
     const updateExpense = async (updated) => {
@@ -543,7 +578,8 @@ export const DataProvider = ({ children }) => {
         }
     };
 
-    const seedPooramData = () => {
+    const seedPooramData = async () => {
+        setIsLoading(true);
         const firstNames = ['Arjun', 'Mohan', 'Gopi', 'Sree', 'Vishnu', 'Rahul', 'Adithi', 'Meera', 'Anandu', 'Pranav'];
         const lastNames = ['Nair', 'Das', 'Kumar', 'Menon', 'Pillai'];
         const addresses = ['House No. 683, Near Temple', 'Near Mahadeva Temple, Kottayam', 'Temple view Villa, Kochi'];
@@ -556,6 +592,8 @@ export const DataProvider = ({ children }) => {
 
         const existingCount = devoteeData.length;
         const newDevotees = [];
+        const newCollections = [];
+
         for (let i = 1; i <= 500; i++) {
             const idValue = 2000 + existingCount + i;
             const id = `DEV-${idValue}`;
@@ -569,28 +607,40 @@ export const DataProvider = ({ children }) => {
                 name: `${fn} ${ln}`,
                 phone: `99${8000000 + getSeededValue(id, 1999999)}`,
                 address: addresses[getSeededValue(id + 'ad', addresses.length)],
-                totalExpected: expected,
-                totalPaid: paid,
-                totalPending: Math.max(0, expected - paid),
-                status: (expected - paid) <= 0 ? 'Paid' : 'Pending',
-                events: [{
-                    id: `REC-${idValue}-P`,
-                    date: new Date().toISOString().split('T')[0],
-                    type: 'Pooram',
-                    year: String(new Date().getFullYear()),
-                    book: 'BK-099',
-                    leaf: 'LF-09',
-                    paid: paid,
-                    unpaid: Math.max(0, expected - paid),
-                    remark: 'Pooram Special collection'
-                }]
+                total_expected: expected,
+                total_paid: paid,
+                total_pending: Math.max(0, expected - paid),
+                status: (expected - paid) <= 0 ? 'Paid' : 'Pending'
+            });
+
+            newCollections.push({
+                id: `REC-${idValue}-P`,
+                devotee_id: id,
+                date: new Date().toISOString().split('T')[0],
+                type: 'Pooram',
+                year: String(new Date().getFullYear()),
+                book: 'BK-099',
+                leaf: 'LF-09',
+                paid: paid,
+                unpaid: Math.max(0, expected - paid),
+                remark: 'Pooram Special collection'
             });
         }
-        setDevoteeData(prev => [...newDevotees, ...prev]);
-        toast.success(`500 ${t.demo_gen_success}`);
+
+        try {
+            await supabase.from('devotees').insert(newDevotees);
+            await supabase.from('collections').insert(newCollections);
+            toast.success(`500 ${t.demo_gen_success}`);
+            fetchAllData();
+        } catch (err) {
+            toast.error('Failed to seed Pooram data');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const seedVilakkuData = () => {
+    const seedVilakkuData = async () => {
+        setIsLoading(true);
         const firstNames = ['Kavya', 'Deepa', 'Santhosh', 'Ramesh', 'Vineeth', 'Abhijith'];
         const lastNames = ['Varier', 'Ayyar', 'Sharma', 'Verma', 'Singh'];
         const addresses = ['Near Mahadeva Temple, Kottayam', 'Temple view Villa, Kochi', 'Aluva East'];
@@ -603,6 +653,8 @@ export const DataProvider = ({ children }) => {
 
         const existingCount = devoteeData.length;
         const newDevotees = [];
+        const newCollections = [];
+
         for (let i = 1; i <= 500; i++) {
             const idValue = 3000 + existingCount + i;
             const id = `DEV-${idValue}`;
@@ -616,25 +668,36 @@ export const DataProvider = ({ children }) => {
                 name: `${fn} ${ln}`,
                 phone: `98${7000000 + getSeededValue(id, 1999999)}`,
                 address: addresses[getSeededValue(id + 'ad', addresses.length)],
-                totalExpected: expected,
-                totalPaid: paid,
-                totalPending: Math.max(0, expected - paid),
-                status: (expected - paid) <= 0 ? 'Paid' : 'Pending',
-                events: [{
-                    id: `REC-${idValue}-V`,
-                    date: new Date().toISOString().split('T')[0],
-                    type: 'Ayyappan Vilakku',
-                    year: String(new Date().getFullYear()),
-                    book: 'BK-V01',
-                    leaf: 'LF-01',
-                    paid: paid,
-                    unpaid: Math.max(0, expected - paid),
-                    remark: 'Vilakku Collection'
-                }]
+                total_expected: expected,
+                total_paid: paid,
+                total_pending: Math.max(0, expected - paid),
+                status: (expected - paid) <= 0 ? 'Paid' : 'Pending'
+            });
+
+            newCollections.push({
+                id: `REC-${idValue}-V`,
+                devotee_id: id,
+                date: new Date().toISOString().split('T')[0],
+                type: 'Ayyappan Vilakku',
+                year: String(new Date().getFullYear()),
+                book: 'BK-V01',
+                leaf: 'LF-01',
+                paid: paid,
+                unpaid: Math.max(0, expected - paid),
+                remark: 'Vilakku Collection'
             });
         }
-        setDevoteeData(prev => [...newDevotees, ...prev]);
-        toast.success(`500 ${t.demo_gen_success}`);
+
+        try {
+            await supabase.from('devotees').insert(newDevotees);
+            await supabase.from('collections').insert(newCollections);
+            toast.success(`500 ${t.demo_gen_success}`);
+            fetchAllData();
+        } catch (err) {
+            toast.error('Failed to seed Vilakku data');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
 
@@ -824,7 +887,9 @@ export const DataProvider = ({ children }) => {
             exportBackup, importBackup, importFromExcel, exportToExcel,
             seedPooramData, seedVilakkuData,
             expenseCategories, addExpenseCategory, deleteExpenseCategory,
-            maskValue, isLoading, migrateLocalToCloud
+            maskValue, isLoading, migrateLocalToCloud,
+            debugMode, toggleDebugMode,
+            islandTip, notifyIsland
         }}>
             {children}
         </DataContext.Provider>

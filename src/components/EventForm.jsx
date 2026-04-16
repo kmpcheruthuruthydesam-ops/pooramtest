@@ -85,7 +85,7 @@ const EventForm = ({ devoteeId, initialType = 'Pooram', onSuccess, existingEvent
     };
 
     const fieldClass = (f) =>
-        `w-full bg-slate-50 border rounded-2xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 outline-none transition-all font-bold ${errors[f] ? 'border-rose-400 bg-rose-50/30' : 'border-slate-100'}`;
+        `w-full bg-slate-50 border rounded-2xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 outline-none transition-all font-bold text-slate-900 ${errors[f] ? 'border-rose-400 bg-rose-50/30' : 'border-slate-100'}`;
 
     const years = [];
     for (let y = parseInt(CURRENT_YEAR); y >= parseInt(CURRENT_YEAR) - 5; y--) years.push(String(y));
@@ -96,7 +96,7 @@ const EventForm = ({ devoteeId, initialType = 'Pooram', onSuccess, existingEvent
                 <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{t.event_type}</label>
                     <select
-                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-orange-500/20 outline-none font-bold cursor-pointer"
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-orange-500/20 outline-none font-bold text-slate-900 cursor-pointer"
                         value={type}
                         onChange={e => setType(e.target.value)}
                     >
@@ -109,7 +109,7 @@ const EventForm = ({ devoteeId, initialType = 'Pooram', onSuccess, existingEvent
                     {/* Fix 2: year defaults to current year */}
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Year</label>
                     <select
-                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-orange-500/20 outline-none font-bold cursor-pointer"
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-orange-500/20 outline-none font-bold text-slate-900 cursor-pointer"
                         value={year}
                         onChange={e => setYear(e.target.value)}
                     >
@@ -133,7 +133,7 @@ const EventForm = ({ devoteeId, initialType = 'Pooram', onSuccess, existingEvent
                     <div>
                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{t.book_no}</label>
                         <input
-                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-3 py-3.5 focus:ring-2 focus:ring-orange-500/20 outline-none font-bold"
+                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-3 py-3.5 focus:ring-2 focus:ring-orange-500/20 outline-none font-bold text-slate-900"
                             value={book}
                             onChange={e => setBook(e.target.value)}
                             placeholder="BK-"
@@ -142,7 +142,7 @@ const EventForm = ({ devoteeId, initialType = 'Pooram', onSuccess, existingEvent
                     <div>
                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{t.leaf_no}</label>
                         <input
-                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-3 py-3.5 focus:ring-2 focus:ring-orange-500/20 outline-none font-bold"
+                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-3 py-3.5 focus:ring-2 focus:ring-orange-500/20 outline-none font-bold text-slate-900"
                             value={leaf}
                             onChange={e => setLeaf(e.target.value)}
                             placeholder="LF-"
@@ -186,7 +186,7 @@ const EventForm = ({ devoteeId, initialType = 'Pooram', onSuccess, existingEvent
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{t.remark}</label>
                 <textarea
                     rows="2"
-                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-orange-500/20 outline-none font-bold resize-none"
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-orange-500/20 outline-none font-bold text-slate-900 resize-none"
                     value={remark}
                     onChange={e => setRemark(e.target.value)}
                     placeholder={t.remark_placeholder}

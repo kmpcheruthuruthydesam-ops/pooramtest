@@ -79,12 +79,12 @@ const DevoteeForm = ({ devotee, onSuccess }) => {
     };
 
     const fieldClass = (field) =>
-        `w-full bg-white border rounded-2xl px-5 py-3.5 focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500/50 outline-none transition-all font-bold shadow-sm ${errors[field] ? 'border-rose-400 bg-rose-50/20' : 'border-slate-200'}`;
+        `w-full bg-white border rounded-2xl px-5 py-3.5 focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500/50 outline-none transition-all font-bold text-slate-900 shadow-sm ${errors[field] ? 'border-rose-400 bg-rose-50/20' : 'border-slate-200'}`;
 
     return (
         <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="col-span-1">
                         <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">ID</label>
                         <input
@@ -107,7 +107,7 @@ const DevoteeForm = ({ devotee, onSuccess }) => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">{t.phone} *</label>
                         <input
@@ -136,7 +136,7 @@ const DevoteeForm = ({ devotee, onSuccess }) => {
                 <div>
                     <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">{t.address}</label>
                     <textarea
-                        className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500/50 outline-none transition-all font-bold resize-none shadow-sm"
+                        className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500/50 outline-none transition-all font-bold text-slate-900 resize-none shadow-sm"
                         rows="3"
                         value={formData.address}
                         onChange={e => setFormData({ ...formData, address: e.target.value })}

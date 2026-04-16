@@ -1,4 +1,4 @@
-import { useState, useMemo, memo, useRef } from 'react';
+import { useState, useMemo, memo, useRef, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
@@ -31,13 +31,14 @@ const SortHeader = memo(({ label, field, sort, onSort, className = '' }) => {
 });
 
 const DevoteeList = () => {
-    const { devoteeData = [], deleteDevotee, exportToCSV, seedMockData, importFromExcel, maskValue } = useData() || {};
+    const { devoteeData = [], deleteDevotee, exportToCSV, seedMockData, importFromExcel, maskValue, debugMode } = useData() || {};
     const excelInputRef = useRef(null);
     const { t } = useLanguage();
     const { userRole } = useAuth();
     const navigate = useNavigate();
 
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedTerm, setDebouncedTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
     const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 12;
@@ -49,6 +50,14 @@ const DevoteeList = () => {
 
     // Fix 4: sort state
     const [sort, setSort] = useState({ field: null, dir: 'asc' });
+
+    // Performance Fix: Debounce heavy search filter array operations
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedTerm(searchTerm);
+        }, 200);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
 
     const handleSort = (field) => {
         setSort(prev => ({
@@ -75,10 +84,10 @@ const DevoteeList = () => {
     const filteredData = useMemo(() => {
         let data = (Array.isArray(devoteeData) ? devoteeData : []).filter(d => {
             const matchesSearch =
-                (d.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (d.phone || '').includes(searchTerm) ||
-                (d.id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (d.address || '').toLowerCase().includes(searchTerm.toLowerCase());
+                (d.name || '').toLowerCase().includes(debouncedTerm.toLowerCase()) ||
+                (d.phone || '').includes(debouncedTerm) ||
+                (d.id || '').toLowerCase().includes(debouncedTerm.toLowerCase()) ||
+                (d.address || '').toLowerCase().includes(debouncedTerm.toLowerCase());
             const matchesStatus = 
                 statusFilter === 'All' || 
                 (statusFilter === 'Nirapara' ? d.isNirapara : d.status === statusFilter);
@@ -96,7 +105,7 @@ const DevoteeList = () => {
             });
         }
         return data;
-    }, [devoteeData, searchTerm, statusFilter, sort]);
+    }, [devoteeData, debouncedTerm, statusFilter, sort]);
 
     const totalRecords = filteredData.length;
     const totalPages = Math.ceil(totalRecords / rowsPerPage);
@@ -111,15 +120,16 @@ const DevoteeList = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4 bg-white/50 p-2 rounded-2xl border border-white/60 w-full md:w-auto">
-                    <div className="flex items-center bg-white pl-4 pr-10 py-1.5 rounded-2xl border border-slate-100 shadow-sm flex-1 md:w-80 group focus-within:border-orange-500/50 focus-within:shadow-[0_0_20px_rgba(249,115,22,0.15)] transition-all duration-300 relative">
+            {/* ═══ FLOATING SEARCH BAR (iOS Style) ═══ */}
+            <div className="glass-search-container md:relative sticky top-0 md:top-0 md:mx-0 z-[45]">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/60 backdrop-blur-3xl p-3 md:p-2 rounded-[28px] border border-white/80 shadow-2xl shadow-slate-200/50">
+                    <div className="flex items-center bg-white px-4 py-3 md:py-1.5 rounded-[22px] border border-slate-100 shadow-sm flex-1 md:w-80 group focus-within:border-orange-500/50 focus-within:shadow-[0_0_20px_rgba(249,115,22,0.1)] transition-all duration-300 relative">
                         <Search className="text-slate-300 group-focus-within:text-orange-500 transition-colors shrink-0" size={18} />
                         <input
                             type="text"
                             aria-label="Search devotees"
                             placeholder={t.search_placeholder}
-                            className="w-full bg-transparent border-none focus:ring-0 pl-3 py-1 text-sm font-medium placeholder:text-slate-300"
+                            className="w-full bg-transparent border-none focus:ring-0 pl-3 py-1 text-[15px] md:text-sm font-medium placeholder:text-slate-300"
                             value={searchTerm}
                             onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                         />
@@ -127,43 +137,126 @@ const DevoteeList = () => {
                             <button
                                 onClick={() => { setSearchTerm(''); setCurrentPage(1); }}
                                 aria-label="Clear search"
-                                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 transition-colors"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 transition-colors"
                             >
-                                <X size={14} />
+                                <X size={16} />
                             </button>
                         )}
                     </div>
-                    <div className="h-8 w-[1px] bg-white/60"></div>
-                    <select
-                        className="bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-600 cursor-pointer pr-8"
-                        value={statusFilter}
-                        onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                    >
-                        <option value="All">{t.all_status}</option>
-                        <option value="Paid">{t.paid}</option>
-                        <option value="Pending">{t.pending}</option>
-                        <option value="Nirapara">{t.nirapara}</option>
-                    </select>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={exportToCSV}
-                        className="btn btn-outline flex items-center gap-2 px-4 py-2.5 bg-white/50 border border-white/60 rounded-xl font-bold text-sm text-slate-600 hover:bg-white hover:text-orange-600 hover:shadow-lg transition-all"
-                    >
-                        <Download size={18} /> {t.export_csv}
-                    </button>
-                    <button
-                        onClick={() => setIsAddModalOpen(true)}
-                        className="btn-primary-gradient flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm"
-                    >
-                        <UserPlus size={18} /> {t.add_devotee}
-                    </button>
+                    
+                    <div className="flex items-center gap-3">
+                        <select
+                            className="bg-white/80 border border-slate-100 rounded-[20px] px-5 py-3 md:py-2 text-[13px] font-black text-slate-600 cursor-pointer focus:ring-2 focus:ring-orange-500/20"
+                            value={statusFilter}
+                            onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+                        >
+                            <option value="All">{t.all_status}</option>
+                            <option value="Paid">{t.paid}</option>
+                            <option value="Pending">{t.pending}</option>
+                            <option value="Nirapara">{t.nirapara}</option>
+                        </select>
+                        <button
+                            onClick={() => setIsAddModalOpen(true)}
+                            className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-6 py-3 md:py-2.5 bg-orange-500 text-white rounded-[22px] font-black text-[13px] shadow-lg shadow-orange-200 active:scale-95 transition-all"
+                        >
+                            <UserPlus size={18} /> <span className="md:inline">{t.add_devotee}</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <div className="glass-card overflow-hidden">
-                <div className="overflow-x-auto relative min-h-[400px]">
+                {/* ═══ MOBILE CARD VIEW (iOS Style) ═══ */}
+                <div className="md:hidden">
+                    {currentRows.length > 0 ? (
+                        <div className="space-y-3 px-4">
+                            {currentRows.map((devotee, i) => (
+                                <div key={`mobile-row-${devotee.id}`} className="relative group overflow-hidden rounded-3xl">
+                                    {/* Action Backing (Hidden Underneath) */}
+                                    <div className="absolute inset-0 flex items-center justify-end px-6 gap-3 bg-slate-900/5 rounded-3xl">
+                                        <button 
+                                            onClick={() => {}} // Placeholder for quick actions
+                                            className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg active:scale-90 transition-transform"
+                                        >
+                                            <Search size={16} />
+                                        </button>
+                                        <button 
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                deleteDevotee(devotee.id);
+                                            }}
+                                            className="w-10 h-10 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-lg active:scale-90 transition-transform"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+
+                                    <motion.div
+                                        drag="x"
+                                        dragConstraints={{ left: -120, right: 0 }}
+                                        dragElastic={0.05}
+                                        dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+                                        whileDrag={{ scale: 1.01 }}
+                                        onDragStart={() => window.isDragging = true}
+                                        onDragEnd={() => setTimeout(() => window.isDragging = false, 100)}
+                                        className="relative z-10"
+                                    >
+                                        <Link 
+                                            to={`/profile/${devotee.id}`} 
+                                            onClick={(e) => {
+                                                if (window.isDragging) {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                }
+                                            }}
+                                            className="flex items-center gap-4 p-5 glass-card !rounded-3xl border-white/80 active:bg-white/90 transition-colors"
+                                        >
+                                            {/* Letter avatar */}
+                                            <div className="w-12 h-12 rounded-[18px] bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-black text-[17px] shrink-0 shadow-lg shadow-orange-100 border border-white/40 active:scale-95 transition-transform">
+                                                {devotee.name?.charAt(0)?.toUpperCase()}
+                                            </div>
+                                            
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-baseline gap-2 mb-0.5">
+                                                    <p className="text-[16px] font-bold text-slate-900 truncate leading-tight">{devotee.name}</p>
+                                                    {devotee.isNirapara && (
+                                                        <span className="px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded-md text-[9px] font-black shrink-0 tracking-tighter uppercase">Nirapara</span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[13px] font-medium text-slate-400 tabular-nums">{devotee.phone}</p>
+                                            </div>
+                                            
+                                            <div className="text-right shrink-0 mr-1">
+                                                <p className={`text-[15px] font-black tabular-nums ${Number(devotee.totalPending) > 0 ? 'text-rose-500' : 'text-emerald-600'}`}>
+                                                    ₹{(Number(devotee.totalPending) || 0).toLocaleString()}
+                                                </p>
+                                                <p className={`text-[10px] font-black uppercase tracking-widest mt-0.5 ${devotee.status === 'Paid' ? 'text-emerald-500' : 'text-orange-500'}`}>
+                                                    {devotee.status === 'Paid' ? t.paid : t.pending}
+                                                </p>
+                                            </div>
+                                            
+                                            {/* iOS chevron */}
+                                            <svg width="6" height="10" viewBox="0 0 6 10" fill="none" className="text-slate-300 shrink-0">
+                                                <path d="M1 1L5 5L1 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                            </svg>
+                                        </Link>
+                                    </motion.div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="py-20 px-10 text-center">
+                            <div className="w-20 h-20 bg-slate-50 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-inner">
+                                <Search size={32} className="text-slate-200" />
+                            </div>
+                            <h4 className="text-[17px] font-black text-slate-800 mb-2">{t.no_devotees_found || 'No records found'}</h4>
+                            <p className="text-[13px] text-slate-400 font-medium leading-relaxed">{t.adjust_filters}</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* ═══ DESKTOP TABLE VIEW ═══ */}
+                <div className="hidden md:block overflow-x-auto relative min-h-[400px]">
                     <table className="w-full text-left border-collapse">
                          <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-100">
@@ -191,7 +284,14 @@ const DevoteeList = () => {
                                         className="hover:bg-white/40 transition-colors group"
                                     >
                                         <td className="px-8 py-5 whitespace-nowrap">
-                                            <span className="font-mono text-[9px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded-md border border-slate-100 group-hover:bg-white transition-colors">#{devotee.id}</span>
+                                            <div className="flex flex-col gap-1">
+                                                <span className="font-mono text-[9px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded-md border border-slate-100 group-hover:bg-white transition-colors">#{devotee.id}</span>
+                                                {debugMode && (
+                                                    <span className="text-[8px] font-bold text-slate-300 font-mono truncate max-w-[60px]" title={devotee.user_id || 'No UUID'}>
+                                                        {devotee.user_id ? `UUID: ..${devotee.user_id.slice(-6)}` : 'LOCAL_ONLY'}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-8 py-5 min-w-[280px]">
                                             <Link to={`/profile/${devotee.id}`} className="flex flex-col group/name">
@@ -245,15 +345,13 @@ const DevoteeList = () => {
                                                 >
                                                     <Edit2 size={16} />
                                                 </button>
-                                                {userRole === 'master' && (
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleDeleteClick(devotee); }}
-                                                        className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
-                                                        title="Delete devotee"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                )}
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleDeleteClick(devotee); }}
+                                                    className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                                    title="Delete devotee"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
                                             </div>
                                         </td>
                                     </motion.tr>

@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
 import {
     Languages,
@@ -16,7 +17,9 @@ import {
     FileDown,
     KeyRound,
     Eye,
-    EyeOff
+    EyeOff,
+    Users,
+    Shield
 } from 'lucide-react';
 import Modal from '../components/Modal';
 
@@ -25,9 +28,11 @@ const Settings = () => {
     const { 
         seedMockData, seedPooramData, seedVilakkuData, purgeData, 
         exportBackup, importBackup, importFromExcel, exportToExcel,
-        migrateLocalToCloud 
+        migrateLocalToCloud, debugMode, toggleDebugMode, devoteeData 
     } = useData();
     const { userRole, currentUsername, changePassword } = useAuth();
+    const isMaster = true; // Everyone is master now
+    const isAnyAdmin = !!userRole;
 
     // Confirm modal state
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -47,10 +52,49 @@ const Settings = () => {
 
     // Excel import state
     const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
-    const [excelPreview, setExcelPreview] = useState(null); // { records: [], fileName }
+    const [excelPreview, setExcelPreview] = useState(null); 
     const [excelBuffer, setExcelBuffer] = useState(null);
-    const [importResult, setImportResult] = useState(null); // { success, count, error }
+    const [importResult, setImportResult] = useState(null); 
     const excelInputRef = useRef(null);
+
+    // Team management state
+    const [profiles, setProfiles] = useState([]);
+    const [isProfilesLoading, setIsProfilesLoading] = useState(false);
+
+    useEffect(() => {
+        if (isMaster) {
+            fetchProfiles();
+        }
+    }, [isMaster]);
+
+    const fetchProfiles = async () => {
+        setIsProfilesLoading(true);
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .order('username', { ascending: true });
+        
+        if (error) {
+            toast.error('Failed to load team: ' + error.message);
+        } else {
+            setProfiles(data || []);
+        }
+        setIsProfilesLoading(false);
+    };
+
+    const handleRoleUpdate = async (userId, newRole) => {
+        const { error } = await supabase
+            .from('profiles')
+            .update({ master: newRole })
+            .eq('id', userId);
+        
+        if (error) {
+            toast.error('Failed to update role: ' + error.message);
+        } else {
+            toast.success(t.role_updated);
+            fetchProfiles(); // Refresh list
+        }
+    };
 
     // ─── Confirm modal helpers ───────────────────────────────────────────────
     const handleActionTrigger = (type, data = null) => {
@@ -67,6 +111,16 @@ const Settings = () => {
         if (pendingAction === 'seedVilakku') seedVilakkuData();
         if (pendingAction === 'restore' && restoreFile) importBackup(restoreFile);
         if (pendingAction === 'migrate') await migrateLocalToCloud();
+    };
+
+    const logCurrentState = () => {
+        console.group('🛠️ Temple CRM - Debug State');
+        console.log('User Role:', userRole);
+        console.log('Username:', currentUsername);
+        console.log('Devotees Count:', devoteeData.length);
+        console.log('Raw Data:', devoteeData);
+        console.groupEnd();
+        toast.success(t.view_state_log);
     };
 
     const handleFileImport = (e) => {
@@ -91,6 +145,18 @@ const Settings = () => {
             message: t.restore_samples_msg,
             btnText: t.restore_samples_btn,
             icon: <RefreshCw size={32} className="text-blue-500" />
+        };
+        if (pendingAction === 'seedPooram') return {
+            title: t.pooram_gen_title || 'Seed Pooram Data',
+            message: t.pooram_gen_msg || 'Generate 500 sample records for Pooram Festival?',
+            btnText: t.pooram_gen_btn || 'Yes, Seed Pooram',
+            icon: <RefreshCw size={32} className="text-orange-500" />
+        };
+        if (pendingAction === 'seedVilakku') return {
+            title: t.vilakku_gen_title || 'Seed Vilakku Data',
+            message: t.vilakku_gen_msg || 'Generate 500 sample records for Ayyappan Vilakku?',
+            btnText: t.vilakku_gen_btn || 'Yes, Seed Vilakku',
+            icon: <RefreshCw size={32} className="text-emerald-500" />
         };
         if (pendingAction === 'restore') return {
             title: t.restore_backup_title,
@@ -192,286 +258,235 @@ const Settings = () => {
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8 pb-12">
-            <header className="mb-10">
-                <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight mb-2">{t.settings}</h1>
-                <p className="text-slate-400 font-medium">{t.settings_subtitle}</p>
+        <div className="max-w-2xl mx-auto space-y-10 pb-16 px-4">
+            <header className="pt-8 mb-4">
+                <h1 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight mb-2">{t.settings}</h1>
+                <p className="text-sm font-medium text-slate-400">{t.settings_subtitle}</p>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Language Settings */}
-                <div className="glass-card p-8 space-y-6">
-                    <div className="flex items-center gap-4 mb-2">
-                        <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500">
-                            <Languages size={24} />
+            {/* General Section */}
+            <div className="space-y-3">
+                <h2 className="px-4 text-[11px] font-black text-slate-400 uppercase tracking-[0.1em]">{t.regional_settings || 'Regional Settings'}</h2>
+                <div className="ios-section">
+                    <div className="p-6 space-y-6">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-orange-500 rounded-[10px] flex items-center justify-center text-white shadow-sm shadow-orange-100">
+                                <Languages size={20} />
+                            </div>
+                            <div>
+                                <h3 className="text-[15px] font-bold text-slate-900">{t.lang_pref}</h3>
+                                <p className="text-[11px] font-medium text-slate-400">{t.regional_settings}</p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-800">{t.lang_pref}</h3>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">{t.regional_settings}</p>
+                        
+                        <div className="flex bg-slate-100/60 p-1.5 rounded-[12px]">
+                            <button 
+                                onClick={() => setLanguage('en')}
+                                className={`flex-1 py-2.5 rounded-[9px] font-bold text-xs transition-all ${language === 'en' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                English
+                            </button>
+                            <button 
+                                onClick={() => setLanguage('ml')}
+                                className={`flex-1 py-2.5 rounded-[9px] font-bold text-xs transition-all ${language === 'ml' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                മലയാളം
+                            </button>
                         </div>
-                    </div>
-                    
-                    <div className="flex bg-slate-100 p-1.5 rounded-2xl">
-                        <button 
-                            onClick={() => setLanguage('en')}
-                            className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${language === 'en' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                        >
-                            English
-                        </button>
-                        <button 
-                            onClick={() => setLanguage('ml')}
-                            className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${language === 'ml' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                        >
-                            മലയാളം
-                        </button>
                     </div>
                 </div>
+            </div>
 
-                {/* Data Portability — unified 2×2 grid */}
-                <div className="glass-card p-8 space-y-6">
-                    <div className="flex items-center gap-4 mb-2">
-                        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500">
-                            <Database size={24} />
+            {/* Data Management Section */}
+            <div className="space-y-3">
+                <h2 className="px-4 text-[11px] font-black text-slate-400 uppercase tracking-[0.1em]">{t.data_mgmt}</h2>
+                <div className="ios-section divide-y divide-slate-100/50">
+                    {/* JSON Data */}
+                    <div className="p-6 space-y-6">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-blue-500 rounded-[10px] flex items-center justify-center text-white shadow-sm shadow-blue-100">
+                                <Database size={20} />
+                            </div>
+                            <div>
+                                <h3 className="text-[15px] font-bold text-slate-900">{t.data_portability}</h3>
+                                <p className="text-[11px] font-medium text-slate-400">{t.backup_json_desc}</p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-800">{t.data_portability}</h3>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">{t.data_mgmt}</p>
+
+                        <input type="file" id="restore-input" accept=".json" className="hidden" onChange={handleFileImport} />
+                        <div className="grid grid-cols-2 gap-3">
+                            <button onClick={exportBackup} className="py-3 bg-white border border-slate-100 rounded-xl font-bold text-xs text-slate-700 active:scale-[0.98] transition-all">
+                                {t.backup_json}
+                            </button>
+                            <button onClick={() => document.getElementById('restore-input').click()} className="py-3 bg-white border border-slate-100 rounded-xl font-bold text-xs text-slate-700 active:scale-[0.98] transition-all">
+                                {t.restore_backup}
+                            </button>
                         </div>
                     </div>
 
-                    {/* Hidden file inputs */}
-                    <input type="file" id="restore-input" accept=".json" className="hidden" onChange={handleFileImport} />
-                    <input ref={excelInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleExcelFileSelect} />
-
-                    <div className="grid grid-cols-2 gap-4">
-                        {/* 1 — Backup JSON */}
-                        <button 
-                            onClick={exportBackup}
-                            className="flex items-center gap-4 p-5 bg-white hover:bg-slate-50 border border-slate-100 rounded-2xl transition-all group shadow-sm text-left"
-                        >
-                            <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-500 shrink-0 group-hover:scale-110 transition-transform">
-                                <Database size={22} />
+                    {/* Excel Data */}
+                    <div className="p-6 space-y-6">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-emerald-500 rounded-[10px] flex items-center justify-center text-white shadow-sm shadow-emerald-100">
+                                <FileSpreadsheet size={20} />
                             </div>
                             <div>
-                                <p className="font-black text-slate-700 text-sm">{t.backup_json}</p>
-                                <p className="text-[10px] font-bold text-slate-400 mt-0.5">{t.backup_json_desc}</p>
+                                <h3 className="text-[15px] font-bold text-slate-900">Excel Export/Import</h3>
+                                <p className="text-[11px] font-medium text-slate-400">Manage records via spreadsheets</p>
                             </div>
-                        </button>
+                        </div>
 
-                        {/* 2 — Export Excel */}
-                        <button 
-                            onClick={exportToExcel}
-                            className="flex items-center gap-4 p-5 bg-white hover:bg-emerald-50 border border-emerald-100 rounded-2xl transition-all group shadow-sm text-left"
-                        >
-                            <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 shrink-0 group-hover:scale-110 transition-transform">
-                                <FileDown size={22} />
-                            </div>
-                            <div>
-                                <p className="font-black text-emerald-700 text-sm">{t.export_excel}</p>
-                                <p className="text-[10px] font-bold text-slate-400 mt-0.5">{t.export_excel_desc}</p>
-                            </div>
-                        </button>
-
-                        {/* 3 — Restore JSON Backup */}
-                        <button 
-                            onClick={() => userRole === 'master' ? document.getElementById('restore-input').click() : toast.error('Permission denied: Master Admin access required')}
-                            className={`flex items-center gap-4 p-5 border rounded-2xl transition-all group shadow-sm text-left ${userRole === 'master' ? 'bg-white hover:bg-blue-50 border-blue-100' : 'bg-slate-50 border-slate-100 opacity-60 cursor-not-allowed'}`}
-                        >
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-transform ${userRole === 'master' ? 'bg-blue-50 text-blue-500 group-hover:scale-110' : 'bg-slate-200 text-slate-400'}`}>
-                                <RefreshCw size={22} />
-                            </div>
-                            <div>
-                                <p className="font-black text-slate-700 text-sm">{t.restore_backup}</p>
-                                <p className="text-[10px] font-bold text-slate-400 mt-0.5">{t.restore_json_desc}</p>
-                            </div>
-                        </button>
-
-                        {/* 4 — Import Excel */}
-                        <button 
-                            onClick={() => userRole === 'master' ? excelInputRef.current.click() : toast.error('Permission denied: Master Admin access required')}
-                            className={`flex items-center gap-4 p-5 border rounded-2xl transition-all group shadow-sm text-left ${userRole === 'master' ? 'bg-white hover:bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-slate-100 opacity-60 cursor-not-allowed'}`}
-                        >
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-transform ${userRole === 'master' ? 'bg-emerald-50 text-emerald-600 group-hover:scale-110' : 'bg-slate-200 text-slate-400'}`}>
-                                <Upload size={22} />
-                            </div>
-                            <div>
-                                <p className="font-black text-emerald-700 text-sm">{t.import_excel}</p>
-                                <p className="text-[10px] font-bold text-slate-400 mt-0.5">{t.import_excel_desc}</p>
-                            </div>
-                        </button>
+                        <input ref={excelInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleExcelFileSelect} />
+                        <div className="grid grid-cols-2 gap-3">
+                            <button onClick={exportToExcel} className="py-3 bg-white border border-emerald-100 rounded-xl font-bold text-xs text-emerald-700 active:scale-[0.98] transition-all">
+                                {t.export_excel}
+                            </button>
+                            <button onClick={() => excelInputRef.current.click()} className="py-3 bg-white border border-emerald-100 rounded-xl font-bold text-xs text-emerald-700 active:scale-[0.98] transition-all">
+                                {t.import_excel}
+                            </button>
+                        </div>
                     </div>
+                </div>
+            </div>
 
-                    {/* Column hint */}
-                    <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-100">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{t.excel_expected_cols}</p>
-                        <div className="flex flex-wrap gap-2">
-                            {['Name', 'Phone', 'Address', 'Expected', 'Paid', 'Status'].map(col => (
-                                <span key={col} className="px-3 py-1 bg-white border border-emerald-100 text-emerald-700 text-[10px] font-black rounded-lg uppercase tracking-wider">{col}</span>
+            {/* Account & Team Section */}
+            <div className="space-y-3">
+                <h2 className="px-4 text-[11px] font-black text-slate-400 uppercase tracking-[0.1em]">{t.administrator}</h2>
+                <div className="ios-section divide-y divide-slate-100/50">
+                    {/* Team Members List */}
+                    <div className="p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 bg-indigo-500 rounded-[10px] flex items-center justify-center text-white shadow-sm shadow-indigo-100">
+                                    <Users size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-[15px] font-bold text-slate-900">{t.team_mgmt}</h3>
+                                    <p className="text-[11px] font-medium text-slate-400">{profiles.length} Active Admins</p>
+                                </div>
+                            </div>
+                            <button onClick={fetchProfiles} className={`p-2 text-slate-400 ${isProfilesLoading ? 'animate-spin' : ''}`}>
+                                <RefreshCw size={16} />
+                            </button>
+                        </div>
+                        
+                        <div className="space-y-2">
+                            {profiles.map(p => (
+                                <div key={p.id} className="flex items-center justify-between p-3 bg-slate-50/50 rounded-xl border border-slate-100/50">
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-800">{p.username}</p>
+                                        <p className="text-[10px] text-slate-400 font-medium">Full Access Admin</p>
+                                    </div>
+                                    <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md uppercase">Master</span>
+                                </div>
                             ))}
                         </div>
-                        <p className="text-[10px] text-slate-400 font-bold mt-2">{t.excel_import_hint}</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Change Password — master only */}
-            {userRole === 'master' && (
-                <div className="glass-card p-8 space-y-6">
-                    <div className="flex items-center gap-4 mb-2">
-                        <div className="w-12 h-12 bg-violet-50 rounded-2xl flex items-center justify-center text-violet-500">
-                            <KeyRound size={24} />
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-800">{t.change_password}</h3>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">{t.master_only}</p>
-                        </div>
                     </div>
 
-                    {cpSuccess ? (
-                        <div className="flex items-center gap-3 p-5 bg-emerald-50 rounded-2xl">
-                            <CheckCircle2 size={22} className="text-emerald-500 shrink-0" />
-                            <p className="font-bold text-emerald-700 text-sm">{t.pwd_updated}</p>
-                        </div>
-                    ) : (
-                        <form onSubmit={handleChangePassword} className="space-y-4" noValidate>
-                            {/* Current Password */}
+                    {/* Password Change */}
+                    <div className="p-6">
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="w-10 h-10 bg-violet-500 rounded-[10px] flex items-center justify-center text-white shadow-sm shadow-violet-100">
+                                <KeyRound size={20} />
+                            </div>
                             <div>
-                                <label className="text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 block">{t.current_password}</label>
-                                <div className="relative">
-                                    <input
+                                <h3 className="text-[15px] font-bold text-slate-900">{t.change_password}</h3>
+                                <p className="text-[11px] font-medium text-slate-400">Security & Credentials</p>
+                            </div>
+                        </div>
+
+                        {cpSuccess ? (
+                            <div className="p-4 bg-emerald-50 rounded-xl flex items-center gap-3">
+                                <CheckCircle2 size={18} className="text-emerald-500" />
+                                <p className="text-xs font-bold text-emerald-700">{t.pwd_updated}</p>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleChangePassword} className="space-y-4">
+                                <div className="space-y-3">
+                                    <input 
                                         type={showCpCurrent ? 'text' : 'password'}
+                                        placeholder={t.current_password}
                                         value={cpCurrent}
-                                        onChange={e => { setCpCurrent(e.target.value); setCpErrors(prev => ({ ...prev, current: '' })); }}
-                                        autoComplete="current-password"
-                                        className={`w-full bg-white border-2 rounded-2xl px-5 pr-12 py-4 text-sm font-bold text-slate-700 outline-none transition-all ${cpErrors.current ? 'border-rose-400 bg-rose-50/20' : 'border-slate-100 focus:border-violet-400/50'}`}
-                                        placeholder={t.enter_current_pwd}
+                                        onChange={e => setCpCurrent(e.target.value)}
+                                        className="w-full bg-slate-100/50 border-none rounded-xl px-4 py-3 text-xs font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-violet-500/20"
                                     />
-                                    <button type="button" tabIndex={-1} onClick={() => setShowCpCurrent(v => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
-                                        {showCpCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
-                                    </button>
-                                </div>
-                                {cpErrors.current && <p className="text-xs font-bold text-rose-500 mt-1.5">{cpErrors.current}</p>}
-                            </div>
-
-                            {/* New Password */}
-                            <div>
-                                <label className="text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 block">{t.new_password}</label>
-                                <div className="relative">
-                                    <input
+                                    <input 
                                         type={showCpNew ? 'text' : 'password'}
+                                        placeholder={t.new_password}
                                         value={cpNew}
-                                        onChange={e => { setCpNew(e.target.value); setCpErrors(prev => ({ ...prev, new: '' })); }}
-                                        autoComplete="new-password"
-                                        className={`w-full bg-white border-2 rounded-2xl px-5 pr-12 py-4 text-sm font-bold text-slate-700 outline-none transition-all ${cpErrors.new ? 'border-rose-400 bg-rose-50/20' : 'border-slate-100 focus:border-violet-400/50'}`}
-                                        placeholder={t.enter_new_pwd}
+                                        onChange={e => setCpNew(e.target.value)}
+                                        className="w-full bg-slate-100/50 border-none rounded-xl px-4 py-3 text-xs font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-violet-500/20"
                                     />
-                                    <button type="button" tabIndex={-1} onClick={() => setShowCpNew(v => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
-                                        {showCpNew ? <EyeOff size={16} /> : <Eye size={16} />}
-                                    </button>
                                 </div>
-                                {cpErrors.new && <p className="text-xs font-bold text-rose-500 mt-1.5">{cpErrors.new}</p>}
-                                {/* Strength indicator */}
-                                {cpNew && (() => {
-                                    const s = getPasswordStrength(cpNew);
-                                    return (
-                                        <div className="mt-2 space-y-1">
-                                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                <div className={`h-full rounded-full transition-all duration-300 ${s.color}`} style={{ width: s.width }} />
-                                            </div>
-                                            <p className={`text-[11px] font-black ${s.text}`}>{s.label}</p>
-                                        </div>
-                                    );
-                                })()}
-                            </div>
-
-                            {/* Confirm Password */}
-                            <div>
-                                <label className="text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 block">{t.confirm_new_password}</label>
-                                <div className="relative">
-                                    <input
-                                        type={showCpConfirm ? 'text' : 'password'}
-                                        value={cpConfirm}
-                                        onChange={e => { setCpConfirm(e.target.value); setCpErrors(prev => ({ ...prev, confirm: '' })); }}
-                                        autoComplete="new-password"
-                                        className={`w-full bg-white border-2 rounded-2xl px-5 pr-12 py-4 text-sm font-bold text-slate-700 outline-none transition-all ${cpErrors.confirm ? 'border-rose-400 bg-rose-50/20' : 'border-slate-100 focus:border-violet-400/50'}`}
-                                        placeholder={t.repeat_new_pwd}
-                                    />
-                                    <button type="button" tabIndex={-1} onClick={() => setShowCpConfirm(v => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
-                                        {showCpConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
-                                    </button>
-                                </div>
-                                {cpErrors.confirm && <p className="text-xs font-bold text-rose-500 mt-1.5">{cpErrors.confirm}</p>}
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={cpLoading}
-                                className="w-full py-4 bg-violet-600 text-white rounded-2xl font-black text-sm shadow-lg shadow-violet-200 hover:bg-violet-700 hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100"
-                            >
-                                {cpLoading ? t.verifying : t.update_password}
-                            </button>
-                        </form>
-                    )}
-                </div>
-            )}
-
-            {/* System Maintenance */}
-            <div className="glass-card p-8 bg-slate-50/50 border-white/60">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500">
-                            <Trash2 size={24} />
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-800">{t.dangerous_actions}</h3>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">{t.dangerous_actions_desc}</p>
-                        </div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                        <button 
-                            onClick={() => userRole === 'master' ? handleActionTrigger('seed') : toast.error('Permission denied: Master Admin access required')}
-                            className={`px-4 py-3 border rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${userRole === 'master' ? 'bg-white hover:bg-slate-50 border-slate-100 text-slate-700' : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'}`}
-                        >
-                            <RefreshCw size={14} className={userRole === 'master' ? 'text-slate-500' : 'text-slate-400'} /> {t.all_samples}
-                        </button>
-
-                        <button 
-                            onClick={() => userRole === 'master' ? handleActionTrigger('migrate') : toast.error('Permission denied: Master Admin access required')}
-                            className={`px-4 py-3 border rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${userRole === 'master' ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-100 text-emerald-600' : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'}`}
-                        >
-                            <Database size={14} className="text-emerald-500" /> Migrate to Cloud
-                        </button>
-
-                        <button 
-                            onClick={() => userRole === 'master' ? handleActionTrigger('purge') : toast.error('Permission denied: Master Admin access required')}
-                            className={`px-4 py-3 border rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${userRole === 'master' ? 'bg-rose-50/30 hover:bg-rose-50 border-rose-100 text-rose-500' : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'}`}
-                        >
-                            <Trash2 size={14} /> {t.purge_everything}
-                        </button>
+                                <button className="w-full py-3 bg-violet-600 text-white rounded-xl font-black text-xs shadow-lg shadow-violet-100 active:scale-[0.98] transition-all">
+                                    {cpLoading ? t.verifying : t.update_password}
+                                </button>
+                            </form>
+                        )}
                     </div>
                 </div>
             </div>
 
-            {/* About Card */}
-            <div className="glass-card p-8 bg-gradient-to-br from-slate-800 to-slate-900 text-white relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
-                <div className="relative z-10 flex items-center justify-between">
-                    <div>
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-md">
-                                <ShieldCheck size={20} className="text-orange-400" />
+            {/* Advanced Section/Developer Hub */}
+            <div className="space-y-3">
+                <h2 className="px-4 text-[11px] font-black text-slate-400 uppercase tracking-[0.1em]">{t.dev_hub}</h2>
+                <div className="ios-section divide-y divide-slate-100/50">
+                    <div className="flex items-center justify-between p-6">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-slate-800 rounded-[10px] flex items-center justify-center text-white">
+                                <Shield size={20} />
                             </div>
-                            <h3 className="text-lg font-black tracking-tight">{t.quick_action_portal} v2.0</h3>
+                            <div>
+                                <h3 className="text-[15px] font-bold text-slate-900">{t.debug_mode}</h3>
+                                <p className="text-[11px] font-medium text-slate-400">Developer diagnostics</p>
+                            </div>
                         </div>
-                        <p className="text-slate-400 text-sm font-medium max-w-lg">
-                            {t.privacy_vault_desc}
-                        </p>
+                        <div className="relative flex items-center">
+                            <input type="checkbox" className="peer sr-only" checked={debugMode} onChange={toggleDebugMode} id="debug-toggle" />
+                            <label htmlFor="debug-toggle" className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-orange-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 cursor-pointer"></label>
+                        </div>
                     </div>
-                    <div className="text-right flex flex-col items-end">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Last Update</p>
-                        <p className="text-sm font-bold text-orange-400">{new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</p>
+
+                    <div className="p-6">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Database Maintenance</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                            <button 
+                                onClick={() => handleActionTrigger('seed')}
+                                className="py-3.5 bg-white border border-slate-100 rounded-xl font-bold text-xs text-slate-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                            >
+                                <RefreshCw size={16} className="text-blue-500" /> All Samples (1000)
+                            </button>
+                            <button 
+                                onClick={() => handleActionTrigger('seedPooram')}
+                                className="py-3.5 bg-white border border-slate-100 rounded-xl font-bold text-xs text-slate-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                            >
+                                <CheckCircle2 size={16} className="text-orange-500" /> Pooram Samples (500)
+                            </button>
+                            <button 
+                                onClick={() => handleActionTrigger('seedVilakku')}
+                                className="py-3.5 bg-white border border-slate-100 rounded-xl font-bold text-xs text-slate-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                            >
+                                <CheckCircle2 size={16} className="text-emerald-500" /> Vilakku Samples (500)
+                            </button>
+                            <button 
+                                onClick={() => handleActionTrigger('purge')}
+                                className="py-3.5 bg-rose-50 text-rose-500 rounded-xl font-black text-xs hover:bg-rose-100 transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Trash2 size={16} /> {t.purge_everything}
+                            </button>
+                        </div>
+                        <p className="text-[10px] font-medium text-slate-300 text-center uppercase tracking-tight">Warning: Purging deletes all cloud records permanently.</p>
                     </div>
                 </div>
+            </div>
+
+            {/* Footer Brand */}
+            <div className="text-center pt-4">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100/50 rounded-full mb-2">
+                    <ShieldCheck size={14} className="text-orange-500" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.quick_action_portal} v2.8</span>
+                </div>
+                <p className="text-[9px] font-bold text-slate-300 uppercase tracking-tight">KMP CHERUTHURUTHY DESAM COMMITTEE</p>
             </div>
 
             {/* ── Confirm Action Modal ─────────────────────────────── */}

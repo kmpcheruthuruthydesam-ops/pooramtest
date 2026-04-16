@@ -1,14 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Inter:wght@100..900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg-main: #f0f2f5;
-  --bg-card: rgba(255, 255, 255, 0.15);
-  --bg-sidebar: rgba(255, 255, 255, 0.1);
-  --text-main: #1e293b;
-  --text-muted: #64748b;
-  --border-card: rgba(255, 255, 255, 0.3);
+  --bg-main: #f8f9fc;
+  --bg-card: rgba(255, 255, 255, 0.72);
+  --bg-sidebar: rgba(255, 255, 255, 0.55);
+  --text-main: #1c1c1e;
+  --text-muted: #8e8e93;
+  --border-card: rgba(255, 255, 255, 0.45);
 }
 
 .dark {
@@ -22,29 +24,62 @@
 
 @layer base {
   body {
-    @apply font-outfit antialiased h-full transition-colors duration-300;
+    @apply font-inter antialiased h-full transition-colors duration-500;
     color: var(--text-main);
     background: var(--bg-main);
-    background-image: 
-      radial-gradient(at 0% 0%, rgba(249, 115, 22, 0.05) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(37, 99, 235, 0.03) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, rgba(249, 115, 22, 0.02) 0px, transparent 50%),
-      radial-gradient(at 0% 100%, rgba(37, 99, 235, 0.05) 0px, transparent 50%);
-    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
   }
 
-  /* Loading Spinner */
-  .loading-spinner {
-      width: 24px;
-      height: 24px;
-      border: 3px solid rgba(249, 115, 22, 0.1);
-      border-radius: 50%;
-      border-top-color: #f97316;
-      animation: spin 0.8s linear infinite;
+  .font-serif {
+    font-family: 'EB Garamond', serif;
   }
 
-  @keyframes spin {
-      to { transform: rotate(360deg); }
+  /* Hyper-Premium Mesh Gradient Foundation */
+  .mesh-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    overflow: hidden;
+    background: #f8f9fc;
+    opacity: 0.8;
+    filter: blur(80px);
+  }
+
+  .mesh-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.15;
+    animation: drift 25s infinite alternate ease-in-out;
+    will-change: transform;
+    transform: translateZ(0);
+  }
+
+  @keyframes drift {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(15%, 10%) scale(1.1); }
+    100% { transform: translate(-5%, 20%) scale(0.9); }
+  }
+
+  /* Skeleton Shimmer Animation */
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .skeleton {
+    @apply bg-slate-200/50 rounded-lg overflow-hidden relative;
+    background: linear-gradient(90deg, 
+      rgba(226, 232, 240, 0.4) 25%, 
+      rgba(226, 232, 240, 0.7) 37%, 
+      rgba(226, 232, 240, 0.4) 63%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
   }
 
   .page-transition-enter { opacity: 0; transform: translateY(10px); }
@@ -68,29 +103,161 @@
           right: 24px !important;
           z-index: 50;
       }
+
+      /* Better touch targets */
+      button, a, input, select, textarea {
+          min-height: 48px;
+      }
+
+      /* Smaller headings on mobile */
+      h1 { font-size: 1.75rem !important; }
+
+      /* Floating Glass Search */
+      .glass-search-container {
+        @apply sticky top-[88px] z-[35] mx-4 mb-6;
+        filter: drop-shadow(0 8px 16px rgba(0,0,0,0.08));
+      }
+  }
+
+  /* Safe area for bottom nav (iPhone notch) */
+  .safe-area-bottom {
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Smooth touch feedback - Premium iOS feel */
+  @media (hover: none) {
+      .active\:scale-ios:active {
+          transform: scale(0.96);
+          transition: transform 0.1s cubic-bezier(0, 0, 0.2, 1);
+      }
+      .glass-card:active {
+          transform: scale(0.985);
+      }
   }
 }
 
 @layer components {
   .glass-card {
-    @apply border shadow-[0_8px_32px_0_rgba(31,38,135,0.08)] rounded-3xl backdrop-blur-[40px] transition-all duration-300;
-    background-color: var(--bg-card);
-    border-color: var(--border-card);
-    box-shadow: inset 0 0 80px rgba(255, 255, 255, 0.05), 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+    @apply border rounded-[28px] backdrop-blur-3xl transition-all duration-500 relative overflow-hidden;
+    background: rgba(255, 255, 255, 0.75);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 
+      0 0.5px 0 0 rgba(255,255,255,0.8) inset,
+      0 1px 2px rgba(0,0,0,0.02),
+      0 16px 48px -12px rgba(0,0,0,0.08);
+  }
+
+  /* Specular rim (iOS high-end light simulation) */
+  .glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.6), transparent);
+    z-index: 10;
+  }
+
+  .glass-card:hover {
+    box-shadow: 
+      0 0.5px 0 0 rgba(255,255,255,0.9) inset,
+      0 2px 4px rgba(0,0,0,0.02),
+      0 24px 64px -8px rgba(0,0,0,0.12);
   }
   
   .glass-sidebar {
     @apply border-r transition-colors duration-300;
-    background-color: var(--bg-sidebar);
-    border-color: var(--border-card);
+    background: rgba(255, 255, 255, 0.55);
+    border-color: rgba(0,0,0,0.04);
   }
 
   .btn-primary-gradient {
-    @apply bg-gradient-to-br from-primary to-primary-light text-white shadow-lg shadow-primary/20 
-           hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 active:scale-95 transition-all duration-300;
+    @apply bg-gradient-to-br from-orange-400 to-orange-600 text-white shadow-xl shadow-orange-100 
+           hover:shadow-2xl hover:shadow-orange-200 hover:-translate-y-0.5 active:scale-[0.92] 
+           transition-all duration-300 shadow-glow-orange;
+  }
+
+  /* iOS-style grouped section */
+  .ios-section {
+    @apply bg-white/80 backdrop-blur-3xl rounded-[22px] overflow-hidden border border-white/70;
+    box-shadow: 0 0.5px 0 0 rgba(255,255,255,0.7) inset, 0 1px 4px rgba(0,0,0,0.04);
+  }
+
+  /* Bento Grid Box */
+  .bento-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 1.5rem;
+  }
+
+  @media (min-width: 1024px) {
+    .bento-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  /* ═══ Phase 4: Dynamic Island & Ultra-Premium Utilities ═══ */
+  .dynamic-island {
+    @apply fixed top-3 left-1/2 -translate-x-1/2 z-[200] bg-slate-900/90 backdrop-blur-3xl 
+           border border-white/10 shadow-2xl transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)];
+    box-shadow: 0 0.5px 0 0 rgba(255,255,255,0.1) inset, 0 12px 32px rgba(0,0,0,0.4);
+  }
+
+  .shadow-glow-orange {
+    box-shadow: 0 0 20px rgba(249, 115, 22, 0.2), 0 12px 24px rgba(249, 115, 22, 0.1);
+  }
+
+  /* Squishy spring physics simulation */
+  .squishy-spring {
+    transition: all 0.5s cubic-bezier(0.68, -0.6, 0.32, 1.6);
+  }
+
+  /* Depth parallax layer */
+  .parallax-bg {
+    @apply fixed inset-0 z-[-1] pointer-events-none;
+    transform: translateZ(-10px);
   }
 }
 
 #root {
   height: 100%;
+}
+
+/* ─── Premium Custom Scrollbar ───────────────────────────────────────────── */
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(249, 115, 22, 0.2) transparent;
+}
+
+/* Chrome, Edge, and Safari */
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(249, 115, 22, 0.15);
+    border-radius: 20px;
+    border: 1px solid transparent;
+    background-clip: content-box;
+    transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(249, 115, 22, 0.4);
+    background-clip: content-box;
+}
+
+.hide-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
 }

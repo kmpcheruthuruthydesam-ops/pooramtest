@@ -4,8 +4,6 @@ import { useLanguage } from '../context/LanguageContext';
 import MetricCard from '../components/MetricCard';
 import { Users, IndianRupee, Clock, Wallet, TrendingUp, PieChart as PieIcon, UserPlus, BadgeIndianRupee, AlertCircle, MessageSquare } from 'lucide-react';
 import { Line, Doughnut } from 'react-chartjs-2';
-import Modal from '../components/Modal';
-import DevoteeForm from '../components/DevoteeForm';
 import { motion } from 'framer-motion';
 import {
   Chart as ChartJS,
@@ -36,11 +34,10 @@ ChartJS.register(
 );
 
 const Dashboard = () => {
-    const { devoteeData = [], privacyMode } = useData() || {};
+    const { devoteeData = [], privacyMode, maskValue } = useData() || {};
     const { t } = useLanguage();
     const navigate = useNavigate();
 
-    const [isAddDevoteeOpen, setIsAddDevoteeOpen] = useState(false);
     // Fix 10: chart date range state — '3m' | '6m' | '1y' | 'all'
     const [chartRange, setChartRange] = useState('6m');
 
@@ -147,33 +144,86 @@ const Dashboard = () => {
     }, [devoteeData]);
 
     return (
-        <div className="space-y-8 pb-12">
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-10 pb-12">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-2">
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
                 >
-                    <h1 className="text-4xl md:text-5xl font-black text-slate-800 tracking-tight leading-tight mb-2">
-                        {t.welcome_title} <span className="text-orange-500">Om.</span>
+                    <h1 className="text-5xl md:text-6xl font-serif text-slate-800 tracking-tight leading-tight mb-3">
+                        {t.welcome_title} <span className="text-orange-500 italic">Om.</span>
                     </h1>
-                    <p className="text-slate-400 font-medium text-lg">{t.welcome_subtitle}</p>
+                    <p className="text-slate-400 font-medium text-lg leading-relaxed max-w-lg">{t.welcome_subtitle}</p>
                 </motion.div>
 
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => setIsAddDevoteeOpen(true)}
-                        className="flex items-center gap-2 px-5 py-3 bg-orange-500 text-white rounded-2xl font-bold text-sm transition-all hover:bg-orange-600 shadow-lg shadow-orange-200"
-                    >
-                        <UserPlus size={18} /> {t.add_devotee}
-                    </button>
-                </div>
+
             </header>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <MetricCard allowPrivacy={false} type="blue"   icon={<Users size={24} />}        label={t.total_devotees}  value={Number(stats.totalDevotees).toLocaleString()} />
-                <MetricCard type="green"  icon={<IndianRupee size={24} />}                  label={t.total_collected} value={`₹${Number(stats.totalPaid).toLocaleString()}`} />
-                <MetricCard type="red"    icon={<Clock size={24} />}                        label={t.total_pending}   value={`₹${Number(stats.totalPending).toLocaleString()}`} />
-                <MetricCard type="orange" icon={<Wallet size={24} />}                       label={t.total_expected}  value={`₹${Number(stats.totalExpected).toLocaleString()}`} />
+            {/* ═══ Hyper-Premium Bento Grid ═══ */}
+            <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-6">
+                <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="md:col-span-2 md:row-span-2"
+                >
+                    <MetricCard 
+                        allowPrivacy={false} 
+                        type="blue" 
+                        icon={<Users size={32} />} 
+                        label={t.total_devotees} 
+                        value={Number(stats.totalDevotees).toLocaleString()} 
+                        trendData={[800, 850, 900, 920, 950, Number(stats.totalDevotees)]}
+                        change={5.2}
+                        large
+                    />
+                </motion.div>
+
+                <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="md:col-span-2 md:row-span-1"
+                >
+                    <MetricCard 
+                        type="green" 
+                        icon={<BadgeIndianRupee size={24} />} 
+                        label={t.total_collected} 
+                        value={`₹${Number(stats.totalPaid).toLocaleString()}`} 
+                        trendData={monthlyCollectionData.data}
+                        change={momTrend?.pct || 0}
+                    />
+                </motion.div>
+
+                <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="md:col-span-1 md:row-span-1"
+                >
+                    <MetricCard 
+                        type="red" 
+                        icon={<Clock size={24} />} 
+                        label={t.total_pending} 
+                        value={`₹${Number(stats.totalPending).toLocaleString()}`} 
+                        trendData={[1500000, 1800000, 2000000, 2100000, Number(stats.totalPending)]}
+                    />
+                </motion.div>
+
+                <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="md:col-span-1 md:row-span-1"
+                >
+                    <MetricCard 
+                        type="orange" 
+                        icon={<Wallet size={24} />} 
+                        label={t.total_expected} 
+                        value={`₹${Number(stats.totalExpected).toLocaleString()}`} 
+                    />
+                </motion.div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -282,9 +332,39 @@ const Dashboard = () => {
             <div className="glass-card overflow-hidden">
                 <div className="px-8 py-6 border-b border-white/40 flex items-center justify-between bg-white/20">
                     <h3 className="text-xl font-bold text-slate-800">{t.recent_collections}</h3>
-                    <button onClick={() => navigate('/collections')} className="text-orange-600 text-sm font-bold hover:underline">{t.view_all_records}</button>
+                    <button onClick={() => navigate('/collections')} className="text-orange-600 text-[13px] font-black hover:underline">{t.view_all_records}</button>
                 </div>
-                <div className="overflow-x-auto">
+
+                {/* Mobile View (Cards) */}
+                <div className="md:hidden divide-y divide-slate-100/30">
+                    {recentTransactions.map((txn, idx) => (
+                        <div key={`txn-mob-${idx}`} className="p-5 active:bg-slate-50 transition-colors flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 shrink-0">
+                                <IndianRupee size={18} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-center mb-0.5">
+                                    <p className="text-[14px] font-bold text-slate-900 truncate">{txn.devoteeName}</p>
+                                    <span className="text-[14px] font-black text-emerald-600">
+                                        {maskValue(`₹${Number(txn.paid || 0).toLocaleString()}`)}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center text-[11px] font-medium text-slate-400">
+                                    <span>{txn.date}</span>
+                                    <span className="bg-slate-100 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter">#{txn.id || '—'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                    {recentTransactions.length === 0 && (
+                        <div className="p-12 text-center text-slate-400 text-sm font-medium">
+                            {t.no_transactions_yet}
+                        </div>
+                    )}
+                </div>
+
+                {/* Desktop View (Table) */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
                             <tr className="bg-slate-50/50 text-slate-400 text-[11px] font-bold uppercase tracking-widest px-8">
@@ -315,7 +395,7 @@ const Dashboard = () => {
                                     <td className="px-8 py-4 text-sm font-bold text-slate-800">{txn.devoteeName || '—'}</td>
                                     <td className="px-8 py-4 text-xs font-bold text-slate-500">{txn.type || '—'}</td>
                                     <td className="px-8 py-4 text-sm font-black text-emerald-600 text-right">
-                                        {privacyMode ? `₹${String(Number(txn.paid || 0).toLocaleString()).replace(/[0-9]/g, '*')}` : `₹${Number(txn.paid || 0).toLocaleString()}`}
+                                        {maskValue(`₹${Number(txn.paid || 0).toLocaleString()}`)}
                                     </td>
                                 </motion.tr>
                             ))}
@@ -323,10 +403,6 @@ const Dashboard = () => {
                     </table>
                 </div>
             </div>
-
-            <Modal isOpen={isAddDevoteeOpen} onClose={() => setIsAddDevoteeOpen(false)} title={t.add_devotee}>
-                <DevoteeForm onSuccess={() => setIsAddDevoteeOpen(false)} />
-            </Modal>
         </div>
     );
 };

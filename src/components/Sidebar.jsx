@@ -10,13 +10,14 @@ import {
     ReceiptText,
     Settings as SettingsIcon,
     LogOut,
-    ChevronRight
+    ChevronRight,
+    Layers
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Sidebar = memo(({ isOpen, setIsOpen }) => {
     const { t } = useLanguage();
-    const { logout } = useAuth();
+    const { logout, userRole } = useAuth();
     const { devoteeData = [], maskValue } = useData() || {};
     const navigate = useNavigate();
 
@@ -45,28 +46,37 @@ const Sidebar = memo(({ isOpen, setIsOpen }) => {
     }, [devoteeData]);
 
     const navItems = [
-        { path: '/',           icon: <LayoutDashboard size={22} />, label: t.dashboard  },
-        { path: '/devotees',   icon: <UserRound size={22} />,       label: t.devotees, badge: pendingCount },
-        { path: '/collections',icon: <Coins size={22} />,           label: t.collections },
-        { path: '/expenses',   icon: <ReceiptText size={22} />,     label: t.expenses  },
-        { path: '/settings',   icon: <SettingsIcon size={22} />,    label: t.settings  },
+        { path: '/',           icon: <LayoutDashboard size={20} />, label: t.dashboard  },
+        { path: '/devotees',   icon: <UserRound size={20} />,       label: t.devotees, badge: pendingCount },
+        { path: '/collections',icon: <Coins size={20} />,           label: t.collections },
+        { path: '/expenses',   icon: <ReceiptText size={20} />,     label: t.expenses  },
+        { path: '/other',      icon: <Layers size={20} />,          label: t.other_nav },
+        { path: '/settings',   icon: <SettingsIcon size={20} />,    label: t.settings  },
     ];
 
     return (
         <aside className={`
-            w-72 h-screen fixed left-0 top-0 bg-white/70 lg:bg-white/40 backdrop-blur-3xl border-r border-white/60 p-8 flex flex-col z-50
+            w-72 h-screen fixed left-0 top-0 bg-white/70 lg:bg-white/40 backdrop-blur-3xl border-r border-white/60 p-6 flex flex-col z-50 overflow-hidden
             transition-transform duration-300 lg:translate-x-0
             ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         `}>
             {/* Fix 9: logo links to dashboard */}
-            <div className="flex items-center justify-between mb-12 px-2">
-                <Link to="/" onClick={() => { if (window.innerWidth < 1024) setIsOpen(false); }} className="flex items-center gap-4 hover:opacity-80 transition-opacity">
-                    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl shadow-orange-100">
-                        🕉
+            <div className="flex items-center justify-between mb-8 px-2">
+                <Link to="/" onClick={() => { if (window.innerWidth < 1024) setIsOpen(false); }} className="flex items-center gap-4 group transition-all duration-500">
+                    <div className="w-14 h-14 bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-400 rounded-[22px] flex items-center justify-center text-white text-2xl shadow-[0_15px_35px_-10px_rgba(234,88,12,0.35)] group-hover:shadow-[0_20px_45px_-10px_rgba(234,88,12,0.5)] group-hover:scale-105 group-hover:-rotate-3 transition-all duration-500 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <span className="relative z-10 filter drop-shadow-md">🕉</span>
                     </div>
                     <div>
-                        <h2 className="text-xl font-black text-slate-800 tracking-tight leading-none mb-1">TEMPLE</h2>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.divine_portal}</p>
+                        <h2 className="text-2xl font-[900] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-600 bg-clip-text text-transparent tracking-tighter leading-none mb-1.5">TEMPLE</h2>
+                        <div className="flex items-center gap-2">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] opacity-80">{t.divine_portal}</p>
+                            {userRole && (
+                                <span className="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter bg-orange-500/10 backdrop-blur-md border border-orange-200/50 text-orange-600 shadow-[0_0_20px_rgba(249,115,22,0.05)]">
+                                    {t.administrator}
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </Link>
                 <button
@@ -87,7 +97,7 @@ const Sidebar = memo(({ isOpen, setIsOpen }) => {
                         aria-current={undefined}
                         onClick={() => { if (window.innerWidth < 1024) setIsOpen(false); }}
                         className={({ isActive }) => `
-                            flex items-center gap-4 px-5 py-4 rounded-2xl font-bold text-sm transition-all duration-300
+                            flex items-center gap-4 px-5 py-3 rounded-2xl font-bold text-sm transition-all duration-300
                             ${isActive
                                 ? 'bg-white shadow-xl shadow-slate-200/50 text-orange-600 active-nav-glow'
                                 : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'}
@@ -115,15 +125,15 @@ const Sidebar = memo(({ isOpen, setIsOpen }) => {
                 ))}
             </nav>
 
-            <div className="pt-8 border-t border-white/60 relative z-10">
+            <div className="pt-4 border-t border-white/60 relative z-10">
                 <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl font-bold text-sm text-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-all duration-300 relative z-20"
+                    className="w-full flex items-center gap-4 px-5 py-3 rounded-2xl font-bold text-sm text-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-all duration-300 relative z-20"
                 >
                     <LogOut size={22} />
                     {t.logout}
                 </button>
-                <div className="mt-6 p-6 bg-gradient-to-br from-slate-800 to-slate-900 rounded-[24px] text-white overflow-hidden relative group">
+                <div className="mt-4 p-6 bg-gradient-to-br from-slate-800 to-slate-900 rounded-[24px] text-white overflow-hidden relative group">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 blur-2xl rounded-full -mr-10 -mt-10 group-hover:bg-white/10 transition-colors"></div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">{t.this_month_small}</p>
                     <p className="text-xl font-black text-white mb-2">₹{monthlyTotal.toLocaleString()}</p>

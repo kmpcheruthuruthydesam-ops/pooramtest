@@ -24,7 +24,7 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }) => {
         <AnimatePresence>
             {isOpen && (
                 <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+                    className="fixed inset-0 z-[100] flex items-end md:items-center justify-center"
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="modal-title"
@@ -39,28 +39,53 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }) => {
                     />
 
                     <motion.div
-                        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                        animate={{ scale: 1, opacity: 1, y: 0 }}
-                        exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                        className={`bg-white/90 backdrop-blur-2xl rounded-[32px] p-8 w-full ${maxWidth} shadow-2xl relative border border-white/60 overflow-hidden`}
+                        initial={window.innerWidth < 768 ? { y: '100%' } : { scale: 0.9, opacity: 0, y: 20 }}
+                        animate={window.innerWidth < 768 ? { y: 0 } : { scale: 1, opacity: 1, y: 0 }}
+                        exit={window.innerWidth < 768 ? { y: '100%' } : { scale: 0.9, opacity: 0, y: 20 }}
+                        transition={{ 
+                            type: 'spring', 
+                            damping: window.innerWidth < 768 ? 32 : 25, 
+                            stiffness: window.innerWidth < 768 ? 300 : 300,
+                            mass: 0.8
+                        }}
+                        drag={window.innerWidth < 768 ? 'y' : false}
+                        dragConstraints={{ top: 0, bottom: 0 }}
+                        dragElastic={0.4}
+                        onDragEnd={(e, info) => {
+                            if (info.offset.y > 100) {
+                                import('../lib/haptics').then(m => m.Haptics.lightTick());
+                                onClose();
+                            }
+                        }}
+                        className={`
+                            bg-white/90 backdrop-blur-3xl w-full ${maxWidth} 
+                            relative border-t md:border border-white/60 overflow-hidden
+                            rounded-t-[32px] md:rounded-[32px] shadow-2xl
+                            max-h-[92vh] md:max-h-[85vh]
+                        `}
                     >
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 id="modal-title" className="text-2xl font-bold text-slate-800 tracking-tight">{title}</h3>
-                            {/* Fix 3c: Bigger, clearer close button */}
+                        {/* iOS Drag Indicator (Mobile Only) */}
+                        <div className="md:hidden flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing">
+                            <div className="w-10 h-1.5 bg-slate-200 rounded-full" />
+                        </div>
+
+                        <div className="flex items-center justify-between px-8 py-6 md:py-8">
+                            <h3 id="modal-title" className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">{title}</h3>
                             <button
                                 ref={firstFocusRef}
                                 onClick={onClose}
                                 aria-label="Close dialog"
-                                className="p-3 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-700 transition-colors"
+                                className="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-400 hover:text-slate-700 transition-colors"
                             >
-                                <X size={20} />
+                                <X size={18} />
                             </button>
                         </div>
 
-                        <div className="max-h-[70vh] overflow-y-auto custom-scrollbar pr-2">
+                    <div className="flex-1 flex flex-col min-h-0">
+                        <div className="px-8 pb-32 md:pb-8 overflow-y-auto custom-scrollbar safe-area-bottom flex-1">
                             {children}
                         </div>
+                    </div>
                     </motion.div>
                 </div>
             )}

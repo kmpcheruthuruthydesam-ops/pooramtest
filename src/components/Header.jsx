@@ -182,21 +182,59 @@ const Header = memo(({ title, onMenuClick }) => {
                     <Search size={20} />
                 </button>
 
-                <div className="flex bg-white/50 p-1 rounded-xl border border-white/60">
-                    <button
-                        onClick={() => setLanguage('en')}
-                        aria-pressed={language === 'en'}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${language === 'en' ? 'bg-orange-500 text-white shadow-md' : 'text-slate-500 hover:text-orange-500'}`}
+                {/* Platform-Specific Language Switcher */}
+                <div className="flex items-center gap-3">
+                    {/* MOBILE: Morphing Magic Orb (Single Button that flips/spins) */}
+                    <motion.button
+                        layout
+                        onClick={() => { 
+                            import('../lib/haptics').then(m => m.Haptics.lightTick());
+                            setLanguage(language === 'en' ? 'ml' : 'en');
+                        }}
+                        whileTap={{ scale: 0.9, rotate: 180 }}
+                        className="md:hidden w-11 h-11 bg-slate-900/5 backdrop-blur-xl border border-white/60 rounded-full flex items-center justify-center relative overflow-hidden group shadow-sm shadow-slate-200/50"
                     >
-                        EN
-                    </button>
-                    <button
-                        onClick={() => setLanguage('ml')}
-                        aria-pressed={language === 'ml'}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${language === 'ml' ? 'bg-orange-500 text-white shadow-md' : 'text-slate-500 hover:text-orange-500'}`}
+                        <AnimatePresence mode='wait'>
+                            <motion.span
+                                key={language}
+                                initial={{ y: 10, opacity: 0, rotate: -45 }}
+                                animate={{ y: 0, opacity: 1, rotate: 0 }}
+                                exit={{ y: -10, opacity: 0, rotate: 45 }}
+                                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                                className="text-[11px] font-black text-slate-700 tracking-tighter"
+                            >
+                                {language === 'en' ? 'EN' : 'മല'}
+                            </motion.span>
+                        </AnimatePresence>
+                        {/* Glow effect on hover/tap */}
+                        <div className="absolute inset-0 bg-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </motion.button>
+
+                    {/* DESKTOP: High-Fidelity Segmented Pill (Visible only on Tablet/Desktop) */}
+                    <motion.div 
+                        layout
+                        className="hidden md:flex bg-slate-900/5 p-1 rounded-2xl border border-white/60 relative isolate overflow-hidden"
                     >
-                        മല
-                    </button>
+                        <motion.div 
+                            layoutId="indicator"
+                            initial={false}
+                            animate={{ x: language === 'en' ? 0 : '100%' }}
+                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                            className="absolute inset-y-1 left-1 w-[calc(50%-4px)] bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl shadow-lg shadow-orange-200/50 -z-10"
+                        />
+                        <button
+                            onClick={() => setLanguage('en')}
+                            className={`px-4 py-1.5 rounded-xl text-[11px] font-black transition-colors relative z-10 ${language === 'en' ? 'text-white' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                            EN
+                        </button>
+                        <button
+                            onClick={() => setLanguage('ml')}
+                            className={`px-4 py-1.5 rounded-xl text-[11px] font-black transition-colors relative z-10 ${language === 'ml' ? 'text-white' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                            മല
+                        </button>
+                    </motion.div>
                 </div>
 
                 <motion.button
@@ -213,7 +251,7 @@ const Header = memo(({ title, onMenuClick }) => {
                     <div className="text-right hidden sm:block">
                         <p className="text-sm font-bold text-slate-800 capitalize">{currentUsername || 'User'}</p>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-                            {userRole === 'master' ? t.chief_admin : t.editor_role}
+                            {t.administrator}
                         </p>
                     </div>
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 border-2 border-white shadow-sm flex items-center justify-center overflow-hidden">

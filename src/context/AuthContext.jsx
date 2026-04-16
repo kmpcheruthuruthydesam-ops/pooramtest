@@ -36,18 +36,26 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(true);
         setCurrentUsername(session.user.email);
         
-        // Fetch role from profiles table
-        const { data: profile, error } = await supabase
+        // Fetch profile to ensure record exists
+        const { data: profile } = await supabase
             .from('profiles')
-            .select('role')
+            .select('id')
             .eq('id', session.user.id)
             .single();
 
-        if (profile && !error) {
-            setUserRole(profile.role);
-        } else {
-            // Default to editor if no profile found (should not happen with trigger)
-            setUserRole('editor');
+        // Everyone is an admin now
+        setUserRole('admin');
+
+        if (!profile) {
+            // If no profile exists, create one
+            try {
+                await supabase.from('profiles').upsert({
+                    id: session.user.id,
+                    username: session.user.email
+                });
+            } catch (err) {
+                console.warn('Profile sync failed:', err.message);
+            }
         }
         setAuthReady(true);
     };

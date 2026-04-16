@@ -5,11 +5,11 @@ import Header from './Header';
 import FAB from './FAB';
 import Modal from './Modal';
 import DevoteeForm from './DevoteeForm';
-import PaymentForm from './PaymentForm';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
 import CommandPalette from './CommandPalette';
+import BottomNav from './BottomNav';
 
 const Layout = () => {
     const location = useLocation();
@@ -18,7 +18,6 @@ const Layout = () => {
     const navigate = useNavigate();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isAddDevoteeOpen, setIsAddDevoteeOpen] = useState(false);
-    const [isLogPaymentOpen, setIsLogPaymentOpen] = useState(false);
     const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
 
     // H: global keyboard shortcuts
@@ -34,7 +33,6 @@ const Layout = () => {
                 case 'e': navigate('/expenses'); break;
                 case 's': navigate('/settings'); break;
                 case 'n': setIsAddDevoteeOpen(true); break;
-                case 'p': setIsLogPaymentOpen(true); break;
                 case '?': setIsShortcutsOpen(true); break;
                 default: break;
             }
@@ -54,7 +52,15 @@ const Layout = () => {
     };
 
     return (
-        <div className="flex h-screen bg-slate-50 overflow-hidden relative">
+        <div className="flex h-screen bg-[#f8f9fc] overflow-hidden relative">
+            {/* ═══ Hyper-Premium Mesh Gradient Background ═══ */}
+            <div className="mesh-container">
+                <div className="mesh-blob w-[500px] h-[500px] bg-orange-200 top-[-10%] left-[-10%]" />
+                <div className="mesh-blob w-[600px] h-[600px] bg-sky-100 top-[20%] right-[-10%] animasi-delay-2000" />
+                <div className="mesh-blob w-[400px] h-[400px] bg-rose-100 bottom-[-5%] left-[20%]" />
+                <div className="mesh-blob w-[500px] h-[500px] bg-indigo-50 top-[40%] left-[40%]" />
+            </div>
+
             <CommandPalette />
             {/* Overlay for mobile sidebar */}
             <AnimatePresence>
@@ -71,17 +77,19 @@ const Layout = () => {
 
             <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
             
+            <DynamicIsland />
+
             <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 lg:pl-72 focus:outline-none">
                 <Header title={getTitle()} onMenuClick={() => setIsSidebarOpen(true)} />
-                <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
-                    <AnimatePresence mode="wait">
+                <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-48 lg:pb-12 custom-scrollbar overflow-x-hidden">
+                    <AnimatePresence mode="popLayout">
                         <motion.div
                             key={location.pathname}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.3, ease: "easeOut" }}
-                            className="max-w-7xl mx-auto"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
+                            className="max-w-7xl mx-auto w-full"
                         >
                             <Outlet />
                         </motion.div>
@@ -89,9 +97,10 @@ const Layout = () => {
                 </main>
             </div>
 
+            <BottomNav />
+
             <FAB 
                 onAddDevotee={() => setIsAddDevoteeOpen(true)}
-                onLogPayment={() => setIsLogPaymentOpen(true)}
                 onAddExpense={() => {/* This is handled by navigation in FAB.jsx */}}
             />
 
@@ -101,14 +110,6 @@ const Layout = () => {
                 title={t.add_devotee}
             >
                 <DevoteeForm onSuccess={() => setIsAddDevoteeOpen(false)} />
-            </Modal>
-
-            <Modal
-                isOpen={isLogPaymentOpen}
-                onClose={() => setIsLogPaymentOpen(false)}
-                title={t.log_payment}
-            >
-                <PaymentForm onSuccess={() => setIsLogPaymentOpen(false)} />
             </Modal>
 
             {/* H: keyboard shortcuts help modal */}
@@ -121,7 +122,6 @@ const Layout = () => {
                         ['e', 'Go to Expenses'],
                         ['s', 'Go to Settings'],
                         ['n', 'New Devotee'],
-                        ['p', 'Log Payment'],
                         ['Ctrl + K', 'Command Palette'],
                         ['?', 'Show this help'],
                     ].map(([key, label]) => (
@@ -134,6 +134,40 @@ const Layout = () => {
                 </div>
             </Modal>
         </div>
+    );
+};
+
+/* ═══ Phase 4: Dynamic Island Component ═══ */
+const DynamicIsland = () => {
+    const { islandTip } = useData();
+    const [isVisible, setIsVisible] = useState(false);
+    const [content, setContent] = useState({ title: 'Jai Mahadeva', type: 'system' });
+
+    useEffect(() => {
+        if (islandTip?.show) {
+            setContent({ title: islandTip.title, type: islandTip.type });
+            setIsVisible(true);
+        } else {
+            setIsVisible(false);
+        }
+    }, [islandTip]);
+
+    return (
+        <AnimatePresence>
+            {isVisible && (
+                <motion.div
+                    layoutId="dynamicIsland"
+                    initial={{ scale: 0.4, opacity: 0, y: -20, x: '-50%' }}
+                    animate={{ scale: 1, opacity: 1, y: 0, x: '-50%' }}
+                    exit={{ scale: 0.6, opacity: 0, y: -10, x: '-50%' }}
+                    className="dynamic-island px-6 py-2 rounded-full flex items-center gap-3 pointer-events-none"
+                    transition={{ type: "spring", stiffness: 450, damping: 28 }}
+                >
+                    <div className={`w-2.5 h-2.5 rounded-full animate-pulse shadow-sm ${content.type === 'error' ? 'bg-rose-500 shadow-rose-500' : 'bg-orange-500 shadow-orange-500'}`} />
+                    <span className="text-white text-[11px] font-black uppercase tracking-[0.25em]">{content.title}</span>
+                </motion.div>
+            )}
+        </AnimatePresence>
     );
 };
 

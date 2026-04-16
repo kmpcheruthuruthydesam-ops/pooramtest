@@ -23,7 +23,13 @@ export default {
         }
       },
       fontFamily: {
-        outfit: ['Outfit', 'sans-serif'],
+        outfit: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        inter: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+      },
+      borderRadius: {
+        'ios': '16px',
+        'ios-lg': '22px',
+        'ios-xl': '28px',
       },
       backdropBlur: {
         xs: '2px',

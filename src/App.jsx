@@ -12,6 +12,7 @@ const Expenses = lazy(() => import('./pages/Expenses'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Login = lazy(() => import('./pages/Login'));
+const Other = lazy(() => import('./pages/Other'));
 
 const PageLoader = ({ message = 'Loading Experience' }) => (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/80 backdrop-blur-md">
@@ -45,6 +46,7 @@ const App = () => {
                     <Route path="devotees" element={<DevoteeList />} />
                     <Route path="collections" element={<Collections />} />
                     <Route path="expenses" element={<Expenses />} />
+                    <Route path="other" element={<Other />} />
                     <Route path="settings" element={<Settings />} />
                     <Route path="profile/:id" element={<Profile />} />
                 </Route>

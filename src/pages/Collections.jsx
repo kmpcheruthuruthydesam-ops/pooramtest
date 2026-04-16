@@ -6,7 +6,7 @@ import Receipt from '../components/Receipt';
 import MetricCard from '../components/MetricCard';
 
 const Collections = () => {
-    const { devoteeData, exportCollectionsToCSV, maskValue } = useData() || {};
+    const { devoteeData, exportCollectionsToCSV, maskValue, debugMode } = useData() || {};
     const { t } = useLanguage();
     const [searchTerm, setSearchTerm] = useState('');
     const [timeFilter, setTimeFilter] = useState('all');
@@ -126,39 +126,41 @@ const Collections = () => {
                 />
             </div>
 
-            <div className="flex flex-col md:flex-row items-center gap-4">
-                <div className="flex bg-white/50 p-1.5 rounded-2xl border border-white/60 shadow-sm w-full md:w-auto">
-                    {filters.map(f => (
-                        <button
-                            key={f.id}
-                            onClick={() => { setTimeFilter(f.id); setCurrentPage(1); }}
-                            className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${timeFilter === f.id ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                        >
-                            {f.label}
-                        </button>
-                    ))}
-                </div>
+            {/* ═══ FLOATING SEARCH & FILTERS (iOS Style) ═══ */}
+            <div className="glass-search-container md:relative sticky top-0 md:top-0 md:mx-0 z-[45]">
+                <div className="flex flex-col md:flex-row items-center gap-4 bg-white/60 backdrop-blur-3xl p-3 md:p-2 rounded-[28px] border border-white/80 shadow-2xl shadow-slate-200/50">
+                    <div className="flex bg-slate-100/50 p-1 rounded-[22px] w-full md:w-auto shrink-0">
+                        {filters.map(f => (
+                            <button
+                                key={f.id}
+                                onClick={() => { setTimeFilter(f.id); setCurrentPage(1); }}
+                                className={`flex-1 md:flex-initial px-4 py-2 rounded-[18px] text-[11px] font-black uppercase tracking-wider transition-all ${timeFilter === f.id ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                {f.label}
+                            </button>
+                        ))}
+                    </div>
 
-                {/* Fix 1: search with clear button */}
-                <div className="flex items-center bg-white/50 px-4 py-3 rounded-2xl border border-white/60 shadow-sm flex-1 max-w-lg group focus-within:border-orange-500/50 focus-within:shadow-[0_0_20px_rgba(249,115,22,0.15)] transition-all duration-300 relative">
-                    <Search className="text-slate-300 group-focus-within:text-orange-500 transition-colors shrink-0" size={18} />
-                    <input
-                        type="text"
-                        aria-label="Search collections"
-                        placeholder={t.col_search_placeholder}
-                        className="flex-1 bg-transparent border-none focus:ring-0 pl-4 py-0 text-sm font-bold text-slate-600 placeholder:text-slate-300 pr-6"
-                        value={searchTerm}
-                        onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                    />
-                    {searchTerm && (
-                        <button
-                            onClick={() => { setSearchTerm(''); setCurrentPage(1); }}
-                            aria-label="Clear search"
-                            className="absolute right-4 text-slate-400 hover:text-slate-700"
-                        >
-                            <X size={14} />
-                        </button>
-                    )}
+                    <div className="flex items-center bg-white px-4 py-2.5 rounded-[22px] border border-slate-100 shadow-sm flex-1 w-full group focus-within:border-orange-500/50 focus-within:shadow-[0_0_20px_rgba(249,115,22,0.1)] transition-all duration-300 relative">
+                        <Search className="text-slate-300 group-focus-within:text-orange-500 transition-colors shrink-0" size={18} />
+                        <input
+                            type="text"
+                            aria-label="Search collections"
+                            placeholder={t.col_search_placeholder}
+                            className="flex-1 bg-transparent border-none focus:ring-0 pl-3 py-0 text-[15px] md:text-sm font-medium text-slate-800 placeholder:text-slate-300 pr-6"
+                            value={searchTerm}
+                            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                        />
+                        {searchTerm && (
+                            <button
+                                onClick={() => { setSearchTerm(''); setCurrentPage(1); }}
+                                aria-label="Clear search"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-700"
+                            >
+                                <X size={14} />
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -196,7 +198,56 @@ const Collections = () => {
             </div>
 
             <div className="glass-card overflow-hidden">
-                <div className="overflow-x-auto relative min-h-[400px]">
+                {/* ═══ MOBILE CARD VIEW (iOS Style) ═══ */}
+                <div className="md:hidden">
+                    {currentRows.length > 0 ? (
+                        <div className="divide-y divide-slate-200/40">
+                            {currentRows.map((item, idx) => (
+                                <div 
+                                    key={item.id ? `col-mob-${item.id}-${idx}` : `col-mob-fb-${idx}`}
+                                    className="flex items-center gap-3.5 px-5 py-3.5 active:bg-slate-100/80 transition-colors duration-150"
+                                >
+                                    {/* Icon based on type */}
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                                        item.type === 'Pooram' ? 'bg-orange-100 text-orange-600' : 
+                                        item.type === 'Ayyappan Vilakku' ? 'bg-blue-100 text-blue-600' : 
+                                        'bg-purple-100 text-purple-600'
+                                    }`}>
+                                        <BadgeIndianRupee size={20} />
+                                    </div>
+
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between mb-0.5">
+                                            <p className="text-[14px] font-bold text-slate-900 truncate">{item.devoteeName}</p>
+                                            <span className="text-[13px] font-black text-emerald-600 tabular-nums">
+                                                ₹{(Number(item.paid) || 0).toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-[12px] text-slate-400 font-medium">
+                                            <span>{item.date?.split('-').reverse().join('/')}</span>
+                                            <span>•</span>
+                                            <span className="truncate">{item.type}</span>
+                                        </div>
+                                    </div>
+
+                                    <button 
+                                        onClick={() => handlePrint(item)}
+                                        className="p-2 text-slate-300 active:text-orange-500"
+                                    >
+                                        <Printer size={18} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="p-16 text-center text-slate-400 font-medium">
+                            {t.no_transactions}
+                        </div>
+                    )}
+                </div>
+
+                {/* ═══ DESKTOP TABLE VIEW ═══ */}
+                <div className="hidden md:block overflow-x-auto relative min-h-[400px]">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b border-white/20">
@@ -218,7 +269,14 @@ const Collections = () => {
                                             {item.date?.split('-').reverse().join('/') || '—'}
                                         </td>
                                         <td className="px-8 py-5">
-                                            <span className="font-mono text-[11px] font-black text-slate-800 bg-slate-100/50 px-2 py-1 rounded">#{item.id}</span>
+                                            <div className="flex flex-col gap-1">
+                                                <span className="font-mono text-[11px] font-black text-slate-800 bg-slate-100/50 px-2 py-1 rounded w-fit">#{item.id}</span>
+                                                {debugMode && (
+                                                    <span className="text-[8px] font-bold text-slate-300 font-mono truncate max-w-[80px]" title={item.id_full || item.id}>
+                                                        RAW: {item.id}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-8 py-5">
                                             <div className="flex flex-col">

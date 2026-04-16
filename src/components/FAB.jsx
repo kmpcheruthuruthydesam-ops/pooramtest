@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Plus, UserPlus, Receipt, ReceiptText, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { Haptics } from '../lib/haptics';
 
-const FAB = ({ onAddDevotee, onLogPayment, onAddExpense }) => {
+const FAB = ({ onAddDevotee, onAddExpense }) => {
     const [isOpen, setIsOpen] = useState(false);
     const navigate = useNavigate();
 
@@ -11,14 +12,8 @@ const FAB = ({ onAddDevotee, onLogPayment, onAddExpense }) => {
         { 
             icon: <UserPlus size={20} />, 
             label: 'Add Devotee', 
-            onClick: () => { onAddDevotee(); setIsOpen(false); },
+            onClick: () => { Haptics.heavyTap(); onAddDevotee(); setIsOpen(false); },
             color: 'bg-blue-500'
-        },
-        { 
-            icon: <Receipt size={20} />, 
-            label: 'Log Payment', 
-            onClick: () => { onLogPayment(); setIsOpen(false); },
-            color: 'bg-orange-500'
         },
         { 
             icon: <ReceiptText size={20} />, 
@@ -36,7 +31,7 @@ const FAB = ({ onAddDevotee, onLogPayment, onAddExpense }) => {
     ];
 
     return (
-        <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end gap-4">
+        <div className="fixed bottom-24 lg:bottom-8 right-6 lg:right-8 z-50 flex flex-col items-end gap-4">
             <AnimatePresence>
                 {isOpen && (
                     <div className="flex flex-col items-end gap-3 mb-2">
@@ -65,7 +60,7 @@ const FAB = ({ onAddDevotee, onLogPayment, onAddExpense }) => {
             <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => { Haptics.lightTick(); setIsOpen(!isOpen); }}
                 className={`w-14 h-14 rounded-[22px] flex items-center justify-center text-white shadow-2xl transition-all duration-300 ${isOpen ? 'bg-slate-800 rotate-45' : 'bg-orange-500 shadow-orange-200'}`}
             >
                 {isOpen ? <X size={24} /> : <Plus size={24} />}

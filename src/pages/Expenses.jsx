@@ -187,18 +187,37 @@ const Expenses = () => {
                 <div className="flex items-center gap-3">
                     <button 
                         onClick={exportExpensesToCSV}
-                        className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-100 rounded-2xl font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm"
+                        className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-6 py-3 bg-white border border-slate-100 rounded-2xl font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm"
                     >
-                        <FileDown size={18} className="text-rose-500" /> Export CSV
+                        <FileDown size={18} className="text-rose-500" /> Export
                     </button>
                     <button 
                         onClick={() => setIsModalOpen(true)}
-                        className="flex items-center gap-2 px-6 py-3 bg-rose-500 text-white rounded-2xl font-bold hover:bg-rose-600 transition-all shadow-xl shadow-rose-100"
+                        className="flex-[2] md:flex-initial flex items-center justify-center gap-2 px-6 py-3 bg-rose-500 text-white rounded-2xl font-bold hover:bg-rose-600 transition-all shadow-xl shadow-rose-100 active:scale-95"
                     >
                         <Plus size={18} /> {t.add_expense}
                     </button>
                 </div>
             </header>
+
+            {/* ═══ CATEGORY FILTERS (Floating iOS Style) ═══ */}
+            <div className="glass-search-container md:relative sticky top-0 md:top-0 md:mx-0 z-[45]">
+                <div className="flex flex-wrap items-center gap-2 bg-white/60 backdrop-blur-3xl p-3 md:p-2 rounded-[28px] border border-white/80 shadow-2xl shadow-slate-200/50 overflow-x-auto no-scrollbar">
+                    <div className="flex items-center gap-2 min-w-max">
+                        <div className="flex items-center bg-white px-4 py-2.5 rounded-[22px] border border-slate-100 shadow-sm transition-all focus-within:border-rose-500/50">
+                            <Filter size={14} className="text-slate-400 mr-2" />
+                            <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest mr-4">Categories</span>
+                            <div className="flex flex-wrap gap-1.5">
+                                {(expenseCategories || []).slice(0, 5).map(cat => (
+                                    <span key={cat} className={`px-3 py-1 rounded-[14px] text-[10px] font-black uppercase tracking-tighter ${CATEGORY_STYLES[cat] || CATEGORY_STYLES['Other']}`}>
+                                        {cat}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="glass-card p-8 bg-white border-white/60 relative overflow-hidden group">
@@ -249,7 +268,60 @@ const Expenses = () => {
             )}
 
             <div className="glass-card overflow-hidden">
-                <div className="overflow-x-auto">
+                {/* ═══ MOBILE CARD VIEW (iOS Style) ═══ */}
+                <div className="md:hidden">
+                    {currentRows.length > 0 ? (
+                        <div className="divide-y divide-slate-200/40">
+                            {currentRows.map((expense) => (
+                                <div 
+                                    key={expense.id}
+                                    className="flex items-center gap-3.5 px-5 py-3.5 active:bg-slate-100/80 transition-colors duration-150"
+                                >
+                                    {/* Category Icon */}
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${CATEGORY_STYLES[expense.category] || CATEGORY_STYLES['Other']}`}>
+                                        <ReceiptText size={18} />
+                                    </div>
+
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between mb-0.5">
+                                            <p className="text-[14px] font-bold text-slate-900 truncate">{expense.name || '—'}</p>
+                                            <span className="text-[13px] font-black text-rose-500 tabular-nums">
+                                                ₹{(Number(expense.amount) || 0).toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-[12px] text-slate-400 font-medium">
+                                            <span>{expense.date?.split('-').reverse().join('/')}</span>
+                                            <span>•</span>
+                                            <span className="truncate">{expense.category}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-1">
+                                        <button 
+                                            onClick={() => handleEdit(expense)}
+                                            className="p-2 text-slate-300 active:text-blue-500"
+                                        >
+                                            <Edit3 size={16} />
+                                        </button>
+                                        <button 
+                                            onClick={() => handleDeleteClick(expense)}
+                                            className="p-2 text-slate-300 active:text-rose-500"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="p-16 text-center text-slate-400 font-medium whitespace-pre-wrap">
+                            {t.no_transactions}
+                        </div>
+                    )}
+                </div>
+
+                {/* ═══ DESKTOP TABLE VIEW ═══ */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
                             <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b border-white/20">
@@ -292,18 +364,16 @@ const Expenses = () => {
                                                 >
                                                     <Edit3 size={16} />
                                                 </button>
-                                                {userRole === 'master' && (
-                                                    <button 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            e.preventDefault();
-                                                            handleDeleteClick(expense);
-                                                        }}
-                                                        className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                )}
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        e.preventDefault();
+                                                        handleDeleteClick(expense);
+                                                    }}
+                                                    className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -391,7 +461,7 @@ const Expenses = () => {
                             <input 
                                 required 
                                 type="date"
-                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500/50 outline-none transition-all font-bold"
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500/50 outline-none transition-all font-bold text-slate-900"
                                 value={formData.date} 
                                 onChange={e => setFormData({...formData, date: e.target.value})}
                             />
@@ -400,7 +470,7 @@ const Expenses = () => {
                             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{t.payee_name}</label>
                             <input 
                                 required 
-                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500/50 outline-none transition-all font-bold"
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500/50 outline-none transition-all font-bold text-slate-900 placeholder:text-slate-400"
                                 value={formData.name} 
                                 onChange={e => setFormData({...formData, name: e.target.value})}
                                 placeholder="e.g. Electricity Board"
@@ -412,7 +482,7 @@ const Expenses = () => {
                             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{t.category}</label>
                             <input 
                                 list="category-suggestions"
-                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500/50 outline-none transition-all font-bold"
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500/50 outline-none transition-all font-bold text-slate-900 placeholder:text-slate-400"
                                 value={formData.category} 
                                 onChange={e => setFormData({...formData, category: e.target.value})}
                                 placeholder="Search or type new category..."
@@ -455,7 +525,7 @@ const Expenses = () => {
                         <Trash2 size={32} />
                     </div>
                     <p className="text-slate-600 font-bold mb-8">
-                        Are you sure you want to delete this expense record for <span className="text-slate-900 border-b-2 border-rose-200">{expenseToDelete?.description}</span>?
+                        Are you sure you want to delete this expense record for <span className="text-slate-900 border-b-2 border-rose-200">{expenseToDelete?.name}</span>?
                     </p>
                     <div className="flex gap-4">
                         <button 

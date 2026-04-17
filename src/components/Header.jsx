@@ -104,7 +104,7 @@ const Header = memo(({ title, onMenuClick }) => {
                             type="text"
                             aria-label="Search devotees"
                             placeholder={t.search_placeholder}
-                            className="pl-11 pr-10 py-2.5 bg-white/50 border border-white/60 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 w-full transition-all placeholder:text-slate-400 text-sm font-medium"
+                            className="pl-11 pr-10 py-2.5 bg-white/50 border border-white/60 rounded-2xl outline-none focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 w-full transition-all placeholder:text-slate-400 text-sm font-bold text-slate-800"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             onFocus={() => debouncedTerm.trim().length > 1 && setShowResults(true)}
@@ -293,7 +293,7 @@ const Header = memo(({ title, onMenuClick }) => {
                                 type="text"
                                 aria-label="Search devotees"
                                 placeholder={t.search_placeholder}
-                                className="pl-11 pr-10 py-4 bg-slate-50 border-none rounded-2xl w-full focus:ring-2 focus:ring-orange-500/20 text-lg font-bold"
+                                className="pl-11 pr-10 py-4 bg-slate-50 border-none rounded-2xl w-full outline-none focus:ring-2 focus:ring-orange-500/20 text-lg font-bold text-slate-900"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />

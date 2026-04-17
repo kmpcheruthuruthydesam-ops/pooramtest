@@ -130,7 +130,7 @@ const DevoteeList = () => {
                             type="text"
                             aria-label="Search devotees"
                             placeholder={t.search_placeholder}
-                            className="w-full bg-transparent border-none focus:ring-0 pl-3 py-1 text-[15px] md:text-sm font-medium placeholder:text-slate-300"
+                            className="flex-1 bg-transparent border-none outline-none focus:ring-0 pl-3 py-0 text-[15px] md:text-sm font-bold text-slate-900 placeholder:text-slate-300 pr-6"
                             value={searchTerm}
                             onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                         />

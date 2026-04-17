@@ -61,7 +61,7 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }) => {
                             bg-white/90 backdrop-blur-3xl w-full ${maxWidth} 
                             relative border-t md:border border-white/60 overflow-hidden
                             rounded-t-[32px] md:rounded-[32px] shadow-2xl
-                            max-h-[92vh] md:max-h-[85vh]
+                            max-h-[92vh] md:max-h-[85vh] flex flex-col
                         `}
                     >
                         {/* iOS Drag Indicator (Mobile Only) */}
@@ -85,7 +85,7 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }) => {
                         </div>
 
                     <div className="flex-1 flex flex-col min-h-0">
-                        <div className="px-8 pb-32 md:pb-8 overflow-y-auto custom-scrollbar safe-area-bottom flex-1">
+                        <div className="px-8 pb-24 md:pb-8 overflow-y-auto custom-scrollbar safe-area-bottom flex-1">
                             {children}
                         </div>
                     </div>

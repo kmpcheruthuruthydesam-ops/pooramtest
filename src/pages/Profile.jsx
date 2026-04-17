@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -21,6 +21,18 @@ const Profile = () => {
     const [isEventModalOpen, setIsEventModalOpen] = useState(false);
     const [modalConfig, setModalConfig] = useState({ type: 'Pooram' });
     const [activeReceipt, setActiveReceipt] = useState(null);
+
+    // Global FAB Event Listener
+    useEffect(() => {
+        const handleOpenModal = (e) => {
+            const { type } = e.detail;
+            setModalConfig({ type });
+            setIsEventModalOpen(true);
+        };
+
+        window.addEventListener('open-event-modal', handleOpenModal);
+        return () => window.removeEventListener('open-event-modal', handleOpenModal);
+    }, []);
 
     // Fix 7: edit event state
     const [editingEvent, setEditingEvent] = useState(null);

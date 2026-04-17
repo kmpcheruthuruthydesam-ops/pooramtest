@@ -91,7 +91,7 @@ const EventForm = ({ devoteeId, initialType = 'Pooram', onSuccess, existingEvent
     for (let y = parseInt(CURRENT_YEAR); y >= parseInt(CURRENT_YEAR) - 5; y--) years.push(String(y));
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6" noValidate>
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{t.event_type}</label>
@@ -183,10 +183,10 @@ const EventForm = ({ devoteeId, initialType = 'Pooram', onSuccess, existingEvent
             </div>
 
             <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{t.remark}</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 px-1">{t.remark}</label>
                 <textarea
-                    rows="2"
-                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-orange-500/20 outline-none font-bold text-slate-900 resize-none"
+                    rows="1"
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 focus:ring-2 focus:ring-orange-500/20 outline-none font-bold text-slate-900 resize-none"
                     value={remark}
                     onChange={e => setRemark(e.target.value)}
                     placeholder={t.remark_placeholder}

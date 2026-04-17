@@ -18,7 +18,7 @@ const MetricCard = memo(({ icon, label, value, type = 'orange', allowPrivacy = t
 
     const maskedValue = useMemo(() => {
         if (!privacyMode || !value || !allowPrivacy) return value;
-        return value.replace(/[0-9]/g, '∗'); 
+        return value.toString().replace(/[0-9]/g, '∗'); 
     }, [value, privacyMode, allowPrivacy]);
 
     return (

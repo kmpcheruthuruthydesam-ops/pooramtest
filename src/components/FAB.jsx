@@ -4,31 +4,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Haptics } from '../lib/haptics';
 
-const FAB = ({ onAddDevotee, onAddExpense }) => {
+const FAB = ({ onAddDevotee, onAddExpense, extraActions = [] }) => {
     const [isOpen, setIsOpen] = useState(false);
     const navigate = useNavigate();
 
-    const actions = [
+    const baseActions = [
         { 
             icon: <UserPlus size={20} />, 
             label: 'Add Devotee', 
             onClick: () => { Haptics.heavyTap(); onAddDevotee(); setIsOpen(false); },
             color: 'bg-blue-500'
         },
-        { 
-            icon: <ReceiptText size={20} />, 
-            label: 'Add Expense', 
-            onClick: () => { 
-                if (window.location.pathname === '/expenses') {
-                    onAddExpense();
-                } else {
-                    navigate('/expenses');
-                }
-                setIsOpen(false); 
-            },
-            color: 'bg-rose-500'
-        },
     ];
+
+    const actions = [...extraActions, ...baseActions];
 
     return (
         <div className="fixed bottom-24 lg:bottom-8 right-6 lg:right-8 z-50 flex flex-col items-end gap-4">

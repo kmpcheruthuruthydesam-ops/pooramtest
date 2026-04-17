@@ -3,10 +3,9 @@ import { useData } from '../context/DataContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, UserPlus, Download, Edit2, Trash2, ArrowRight, X, ChevronUp, ChevronDown, Check, BadgeIndianRupee, CheckCircle, Receipt } from 'lucide-react';
+import { Search, UserPlus, Download, Edit2, Trash2, ArrowRight, X, ChevronUp, ChevronDown } from 'lucide-react';
 import Modal from '../components/Modal';
 import DevoteeForm from '../components/DevoteeForm';
-import MetricCard from '../components/MetricCard';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Haptics } from '../lib/haptics';
@@ -120,11 +119,6 @@ const DevoteeList = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const totalDevotees = devoteeData.length;
-    const paidDevotees = devoteeData.filter(d => d.status === 'Paid').length;
-    const totalPaid = devoteeData.reduce((sum, d) => sum + (Number(d.totalPaid) || 0), 0);
-    const totalPending = devoteeData.reduce((sum, d) => sum + (Number(d.totalPending) || 0), 0);
-
     return (
         <div className="space-y-6">
             {/* ═══ FLOATING SEARCH BAR (iOS Style) ═══ */}
@@ -174,36 +168,6 @@ const DevoteeList = () => {
                         </button>
                     </div>
                 </div>
-            </div>
-
-            {/* ═══ Stats Cards ═══ */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 md:mt-4">
-                <MetricCard 
-                    label={t.total_devotees} 
-                    value={totalDevotees} 
-                    icon={<UserPlus size={18} />} 
-                    color="blue"
-                />
-                <MetricCard 
-                    label={t.paid_devotees} 
-                    value={paidDevotees} 
-                    icon={<CheckCircle size={18} />} 
-                    color="emerald"
-                />
-                <MetricCard 
-                    label={t.total_paid} 
-                    value={`₹${totalPaid.toLocaleString()}`} 
-                    icon={<BadgeIndianRupee size={18} />} 
-                    color="orange"
-                    isCurrency={true}
-                />
-                <MetricCard 
-                    label={t.total_pending} 
-                    value={`₹${totalPending.toLocaleString()}`} 
-                    icon={<Receipt size={18} />} 
-                    color="rose"
-                    isCurrency={true}
-                />
             </div>
 
             <div className="glass-card overflow-hidden">

@@ -10,6 +10,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
 import CommandPalette from './CommandPalette';
 import BottomNav from './BottomNav';
+import { Flame, Zap } from 'lucide-react';
 
 const Layout = () => {
     const location = useLocation();
@@ -22,6 +23,28 @@ const Layout = () => {
     const [deferredPrompt, setDeferredPrompt] = useState(null);
     const [isInstallable, setIsInstallable] = useState(false);
     const [updateAvailable, setUpdateAvailable] = useState(false);
+
+    // Dynamic FAB Actions logic
+    const isProfilePage = location.pathname.startsWith('/profile/');
+    
+    const extraFabActions = isProfilePage ? [
+        {
+            icon: <Zap size={20} />,
+            label: t.log_pooram || 'Pooram Entry',
+            onClick: () => {
+                window.dispatchEvent(new CustomEvent('open-event-modal', { detail: { type: 'Pooram' } }));
+            },
+            color: 'bg-orange-500'
+        },
+        {
+            icon: <Flame size={20} />,
+            label: t.log_vilakku || 'Vilakku Entry',
+            onClick: () => {
+                window.dispatchEvent(new CustomEvent('open-event-modal', { detail: { type: 'Ayyappan Vilakku' } }));
+            },
+            color: 'bg-indigo-600'
+        }
+    ] : [];
 
     useEffect(() => {
         const handleBeforeInstallPrompt = (e) => {
@@ -160,10 +183,13 @@ const Layout = () => {
 
             <BottomNav />
 
-            <FAB 
-                onAddDevotee={() => setIsAddDevoteeOpen(true)}
-                onAddExpense={() => {/* This is handled by navigation in FAB.jsx */}}
-            />
+            {(location.pathname.includes('/devotees') || location.pathname.includes('/profile/')) && (
+                <FAB 
+                    onAddDevotee={() => setIsAddDevoteeOpen(true)}
+                    onAddExpense={() => {/* This is handled by navigation in FAB.jsx */}}
+                    extraActions={extraFabActions}
+                />
+            )}
 
             <Modal 
                 isOpen={isAddDevoteeOpen} 

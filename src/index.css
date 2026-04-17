@@ -129,7 +129,7 @@
 
       /* Floating Glass Search */
       .glass-search-container {
-        @apply sticky top-[88px] z-[35] mx-4 mb-6;
+        @apply sticky top-[80px] z-[35] mx-4 mb-6;
         filter: drop-shadow(0 8px 16px rgba(0,0,0,0.08));
       }
   }

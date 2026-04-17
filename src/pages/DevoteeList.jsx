@@ -121,9 +121,9 @@ const DevoteeList = () => {
     return (
         <div className="space-y-6">
             {/* ═══ FLOATING SEARCH BAR (iOS Style) ═══ */}
-            <div className="glass-search-container md:relative sticky top-0 md:top-0 md:mx-0 z-[45]">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/60 backdrop-blur-3xl p-3 md:p-2 rounded-[28px] border border-white/80 shadow-2xl shadow-slate-200/50">
-                    <div className="flex items-center bg-white px-4 py-3 md:py-1.5 rounded-[22px] border border-slate-100 shadow-sm flex-1 md:w-80 group focus-within:border-orange-500/50 focus-within:shadow-[0_0_20px_rgba(249,115,22,0.1)] transition-all duration-300 relative">
+            <div className="glass-search-container md:relative z-[45]">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white/60 backdrop-blur-3xl p-3 md:p-2 rounded-[28px] border border-white/80 shadow-2xl shadow-slate-200/50">
+                    <div className="flex items-center bg-white px-4 py-2.5 md:py-1.5 rounded-[22px] border border-slate-100 shadow-sm flex-1 md:w-80 group focus-within:border-orange-500/50 focus-within:shadow-[0_0_20px_rgba(249,115,22,0.1)] transition-all duration-300 relative">
                         <Search className="text-slate-300 group-focus-within:text-orange-500 transition-colors shrink-0" size={18} />
                         <input
                             type="text"
@@ -144,9 +144,9 @@ const DevoteeList = () => {
                         )}
                     </div>
                     
-                    <div className="flex items-center gap-3">
+                    <div className="grid grid-cols-2 md:flex md:items-center gap-2.5">
                         <select
-                            className="bg-white/80 border border-slate-100 rounded-[20px] px-5 py-3 md:py-2 text-[13px] font-black text-slate-600 cursor-pointer focus:ring-2 focus:ring-orange-500/20"
+                            className="bg-white/80 border border-slate-100 rounded-[20px] px-4 py-3 md:py-2 text-[12px] md:text-[13px] font-black text-slate-600 cursor-pointer focus:ring-2 focus:ring-orange-500/20"
                             value={statusFilter}
                             onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
                         >
@@ -157,9 +157,9 @@ const DevoteeList = () => {
                         </select>
                         <button
                             onClick={() => setIsAddModalOpen(true)}
-                            className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-6 py-3 md:py-2.5 bg-orange-500 text-white rounded-[22px] font-black text-[13px] shadow-lg shadow-orange-200 active:scale-95 transition-all"
+                            className="flex items-center justify-center gap-1.5 px-4 py-3 md:py-2.5 bg-orange-500 text-white rounded-[22px] font-black text-[12px] md:text-[13px] shadow-lg shadow-orange-200 active:scale-95 transition-all truncate"
                         >
-                            <UserPlus size={18} /> <span className="md:inline">{t.add_devotee}</span>
+                            <UserPlus size={16} /> <span className="truncate">{t.add_devotee}</span>
                         </button>
                     </div>
                 </div>

@@ -127,18 +127,20 @@ const Collections = () => {
             </div>
 
             {/* ═══ FLOATING SEARCH & FILTERS (iOS Style) ═══ */}
-            <div className="glass-search-container md:relative sticky top-0 md:top-0 md:mx-0 z-[45]">
-                <div className="flex flex-col md:flex-row items-center gap-4 bg-white/60 backdrop-blur-3xl p-3 md:p-2 rounded-[28px] border border-white/80 shadow-2xl shadow-slate-200/50">
-                    <div className="flex bg-slate-100/50 p-1 rounded-[22px] w-full md:w-auto shrink-0">
-                        {filters.map(f => (
-                            <button
-                                key={f.id}
-                                onClick={() => { setTimeFilter(f.id); setCurrentPage(1); }}
-                                className={`flex-1 md:flex-initial px-4 py-2 rounded-[18px] text-[11px] font-black uppercase tracking-wider transition-all ${timeFilter === f.id ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                            >
-                                {f.label}
-                            </button>
-                        ))}
+            <div className="glass-search-container md:relative z-[45]">
+                <div className="flex flex-col md:flex-row items-center gap-3 bg-white/60 backdrop-blur-3xl p-3 md:p-2 rounded-[28px] border border-white/80 shadow-2xl shadow-slate-200/50">
+                    <div className="flex bg-slate-100/50 p-1 rounded-[22px] w-full md:w-auto shrink-0 overflow-x-auto hide-scrollbar">
+                        <div className="flex min-w-max">
+                            {filters.map(f => (
+                                <button
+                                    key={f.id}
+                                    onClick={() => { setTimeFilter(f.id); setCurrentPage(1); }}
+                                    className={`px-4 py-2 rounded-[18px] text-[11px] font-black uppercase tracking-wider transition-all ${timeFilter === f.id ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    {f.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     <div className="flex items-center bg-white px-4 py-2.5 rounded-[22px] border border-slate-100 shadow-sm flex-1 w-full group focus-within:border-orange-500/50 focus-within:shadow-[0_0_20px_rgba(249,115,22,0.1)] transition-all duration-300 relative">

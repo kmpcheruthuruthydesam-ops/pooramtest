@@ -118,18 +118,9 @@ const Collections = () => {
                 </button>
             </header>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 mt-2">
-                <MetricCard 
-                    type="green"  
-                    icon={<BadgeIndianRupee size={24} />} 
-                    label={t.today_collection} 
-                    value={`₹${Number(todaysCollectionAmount).toLocaleString()}`} 
-                />
-            </div>
-
             {/* ═══ FLOATING SEARCH & FILTERS (iOS Style) ═══ */}
-            <div className="glass-search-container md:relative z-[45]">
-                <div className="flex flex-col md:flex-row items-center gap-3 bg-white/60 backdrop-blur-3xl p-3 md:p-2 rounded-[28px] border border-white/80 shadow-2xl shadow-slate-200/50">
+            <div className="glass-search-container z-[45]">
+                <div className="flex flex-col md:flex-row items-center gap-3 bg-white/60 backdrop-blur-3xl p-4 md:p-2 rounded-[28px] border border-white/80 shadow-2xl shadow-slate-200/50">
                     <div className="flex bg-slate-100/50 p-1 rounded-[22px] w-full md:w-auto shrink-0 overflow-x-auto hide-scrollbar">
                         <div className="flex min-w-max">
                             {filters.map(f => (
@@ -164,11 +155,20 @@ const Collections = () => {
                                 aria-label="Clear search"
                                 className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-700"
                             >
-                                <X size={14} />
+                                <X size={16} />
                             </button>
                         )}
                     </div>
                 </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 mt-10 md:mt-6">
+                <MetricCard 
+                    type="green"  
+                    icon={<BadgeIndianRupee size={24} />} 
+                    label={t.today_collection} 
+                    value={`₹${Number(todaysCollectionAmount).toLocaleString()}`} 
+                />
             </div>
 
             {/* F: type breakdown cards */}

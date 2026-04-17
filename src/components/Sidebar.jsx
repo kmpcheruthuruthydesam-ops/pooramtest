@@ -70,7 +70,7 @@ const Sidebar = memo(({ isOpen, setIsOpen, isInstallable, onInstall }) => {
                         <span className="relative z-10 filter drop-shadow-md">🕉</span>
                     </div>
                     <div>
-                        <h2 className="text-2xl font-[900] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-600 bg-clip-text text-transparent tracking-tighter leading-none mb-1.5 uppercase">POORAM</h2>
+                        <h2 className="text-2xl font-[900] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-600 bg-clip-text text-transparent tracking-tighter leading-none mb-1.5">TEMPLE</h2>
                         <div className="flex items-center gap-2">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] opacity-80">{t.divine_portal}</p>
                             {userRole && (

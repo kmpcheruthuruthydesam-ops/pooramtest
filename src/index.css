@@ -129,8 +129,8 @@
 
       /* Floating Glass Search */
       .glass-search-container {
-        @apply sticky top-[80px] z-[35] mx-4 mb-6;
-        filter: drop-shadow(0 8px 16px rgba(0,0,0,0.08));
+        @apply relative z-[35] mx-4 mb-10;
+        filter: drop-shadow(0 12px 24px rgba(0,0,0,0.1));
       }
   }
 
@@ -231,9 +231,9 @@
 
   /* ═══ Phase 4: Dynamic Island & Ultra-Premium Utilities ═══ */
   .dynamic-island {
-    @apply fixed top-3 left-1/2 -translate-x-1/2 z-[200] bg-slate-900/90 backdrop-blur-3xl 
+    @apply fixed top-2 left-1/2 -translate-x-1/2 z-[200] bg-slate-900/95 backdrop-blur-3xl 
            border border-white/10 shadow-2xl transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)];
-    box-shadow: 0 0.5px 0 0 rgba(255,255,255,0.1) inset, 0 12px 32px rgba(0,0,0,0.4);
+    box-shadow: 0 0.5px 0 0 rgba(255,255,255,0.1) inset, 0 12px 32px rgba(0,0,0,0.5);
   }
 
   .shadow-glow-orange {

@@ -201,8 +201,8 @@ const Expenses = () => {
             </header>
 
             {/* ═══ CATEGORY FILTERS (Floating iOS Style) ═══ */}
-            <div className="glass-search-container md:relative sticky top-0 md:top-0 md:mx-0 z-[45]">
-                <div className="flex flex-wrap items-center gap-2 bg-white/60 backdrop-blur-3xl p-3 md:p-2 rounded-[28px] border border-white/80 shadow-2xl shadow-slate-200/50 overflow-x-auto no-scrollbar">
+            <div className="glass-search-container z-[45]">
+                <div className="flex flex-wrap items-center gap-2 bg-white/60 backdrop-blur-3xl p-4 md:p-2 rounded-[28px] border border-white/80 shadow-2xl shadow-slate-200/50 overflow-x-auto no-scrollbar">
                     <div className="flex items-center gap-2 min-w-max">
                         <div className="flex items-center bg-white px-4 py-2.5 rounded-[22px] border border-slate-100 shadow-sm transition-all focus-within:border-rose-500/50">
                             <Filter size={14} className="text-slate-400 mr-2" />
@@ -219,7 +219,7 @@ const Expenses = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10 md:mt-6">
                 <div className="glass-card p-8 bg-white border-white/60 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-rose-50 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-700 opacity-50"></div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">{t.total_expenses}</p>

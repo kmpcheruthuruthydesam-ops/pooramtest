@@ -3,9 +3,10 @@ import { useData } from '../context/DataContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, UserPlus, Download, Edit2, Trash2, ArrowRight, X, ChevronUp, ChevronDown, Check } from 'lucide-react';
+import { Search, UserPlus, Download, Edit2, Trash2, ArrowRight, X, ChevronUp, ChevronDown, Check, BadgeIndianRupee, CheckCircle, Receipt } from 'lucide-react';
 import Modal from '../components/Modal';
 import DevoteeForm from '../components/DevoteeForm';
+import MetricCard from '../components/MetricCard';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Haptics } from '../lib/haptics';
@@ -119,18 +120,23 @@ const DevoteeList = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    const totalDevotees = devoteeData.length;
+    const paidDevotees = devoteeData.filter(d => d.status === 'Paid').length;
+    const totalPaid = devoteeData.reduce((sum, d) => sum + (Number(d.totalPaid) || 0), 0);
+    const totalPending = devoteeData.reduce((sum, d) => sum + (Number(d.totalPending) || 0), 0);
+
     return (
         <div className="space-y-6">
             {/* ═══ FLOATING SEARCH BAR (iOS Style) ═══ */}
-            <div className="glass-search-container md:relative z-[45]">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white/60 backdrop-blur-3xl p-3 md:p-2 rounded-[28px] border border-white/80 shadow-2xl shadow-slate-200/50">
-                    <div className="flex items-center bg-white px-4 py-2.5 md:py-1.5 rounded-[22px] border border-slate-100 shadow-sm flex-1 md:w-80 group focus-within:border-orange-500/50 focus-within:shadow-[0_0_20px_rgba(249,115,22,0.1)] transition-all duration-300 relative">
+            <div className="glass-search-container z-[45]">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white/60 backdrop-blur-3xl p-4 md:p-2 rounded-[28px] border border-white/80 shadow-2xl shadow-slate-200/50">
+                    <div className="flex items-center bg-white px-4 py-2.5 rounded-[22px] border border-slate-100 shadow-sm flex-1 md:w-80 group focus-within:border-orange-500/50 focus-within:shadow-[0_0_20px_rgba(249,115,22,0.1)] transition-all duration-300 relative">
                         <Search className="text-slate-300 group-focus-within:text-orange-500 transition-colors shrink-0" size={18} />
                         <input
                             type="text"
                             aria-label="Search devotees"
                             placeholder={t.search_placeholder}
-                            className="flex-1 bg-transparent border-none outline-none focus:ring-0 pl-3 py-0 text-[15px] md:text-sm font-bold text-slate-900 placeholder:text-slate-300 pr-6"
+                            className="w-full bg-transparent border-none outline-none focus:ring-0 pl-3 py-1 text-[15px] md:text-sm font-bold text-slate-900 placeholder:text-slate-300"
                             value={searchTerm}
                             onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                         />
@@ -168,6 +174,36 @@ const DevoteeList = () => {
                         </button>
                     </div>
                 </div>
+            </div>
+
+            {/* ═══ Stats Cards ═══ */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 md:mt-4">
+                <MetricCard 
+                    label={t.total_devotees} 
+                    value={totalDevotees} 
+                    icon={<UserPlus size={18} />} 
+                    color="blue"
+                />
+                <MetricCard 
+                    label={t.paid_devotees} 
+                    value={paidDevotees} 
+                    icon={<CheckCircle size={18} />} 
+                    color="emerald"
+                />
+                <MetricCard 
+                    label={t.total_paid} 
+                    value={`₹${totalPaid.toLocaleString()}`} 
+                    icon={<BadgeIndianRupee size={18} />} 
+                    color="orange"
+                    isCurrency={true}
+                />
+                <MetricCard 
+                    label={t.total_pending} 
+                    value={`₹${totalPending.toLocaleString()}`} 
+                    icon={<Receipt size={18} />} 
+                    color="rose"
+                    isCurrency={true}
+                />
             </div>
 
             <div className="glass-card overflow-hidden">

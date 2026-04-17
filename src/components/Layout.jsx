@@ -10,6 +10,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
 import CommandPalette from './CommandPalette';
 import BottomNav from './BottomNav';
+import PullToRefresh from './PullToRefresh';
 
 const Layout = () => {
     const location = useLocation();
@@ -140,9 +141,10 @@ const Layout = () => {
                 onUpdate={handleUpdate} 
             />
 
-            <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 lg:pl-72 focus:outline-none">
+            <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 lg:pl-72 focus:outline-none h-full">
                 <Header title={getTitle()} onMenuClick={() => setIsSidebarOpen(true)} />
-                <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-48 lg:pb-12 custom-scrollbar overflow-x-hidden">
+                <PullToRefresh onRefresh={handleUpdate}>
+                    <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-48 lg:pb-12 custom-scrollbar overflow-x-hidden h-full">
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={location.pathname}
@@ -155,7 +157,8 @@ const Layout = () => {
                             <Outlet />
                         </motion.div>
                     </AnimatePresence>
-                </main>
+                    </main>
+                </PullToRefresh>
             </div>
 
             <BottomNav />

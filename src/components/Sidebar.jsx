@@ -2,7 +2,7 @@ import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import { useMemo, memo } from 'react';
+import { useMemo, memo, useState, useEffect } from 'react';
 import {
     LayoutDashboard,
     UserRound,
@@ -20,6 +20,43 @@ const Sidebar = memo(({ isOpen, setIsOpen }) => {
     const { logout, userRole } = useAuth();
     const { devoteeData = [], maskValue } = useData() || {};
     const navigate = useNavigate();
+
+    const [deferredPrompt, setDeferredPrompt] = useState(null);
+    const [isInstallable, setIsInstallable] = useState(false);
+
+    useEffect(() => {
+        const handleBeforeInstallPrompt = (e) => {
+            // Prevent the mini-infobar from appearing on mobile
+            e.preventDefault();
+            setDeferredPrompt(e);
+            setIsInstallable(true);
+        };
+
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+        // Optionally, check if it's already installed
+        window.addEventListener('appinstalled', () => {
+            setDeferredPrompt(null);
+            setIsInstallable(false);
+            console.log('PWA was installed');
+        });
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        };
+    }, []);
+
+    const handleInstallClick = async () => {
+        if (!deferredPrompt) return;
+        
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        
+        if (outcome === 'accepted') {
+            setIsInstallable(false);
+        }
+        setDeferredPrompt(null);
+    };
 
     const handleLogout = () => {
         logout();
@@ -126,6 +163,15 @@ const Sidebar = memo(({ isOpen, setIsOpen }) => {
             </nav>
 
             <div className="pt-4 border-t border-white/60 relative z-10">
+                {isInstallable && (
+                    <button
+                        onClick={handleInstallClick}
+                        className="w-full flex items-center gap-4 px-5 py-3 mb-2 rounded-2xl font-bold text-sm bg-orange-50 text-orange-600 hover:bg-orange-100 transition-all duration-300 relative z-20"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                        Install App
+                    </button>
+                )}
                 <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-4 px-5 py-3 rounded-2xl font-bold text-sm text-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-all duration-300 relative z-20"

@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { LayoutDashboard, UserRound, Coins, ReceiptText, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Haptics } from '../lib/haptics';
 
 const BottomNav = () => {
     const { t } = useLanguage();
@@ -20,7 +21,7 @@ const BottomNav = () => {
     );
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-[100] lg:hidden safe-area-bottom">
+        <nav className="fixed bottom-0 left-0 right-0 z-[100] lg:hidden safe-area-bottom select-none">
             {/* iOS-style frosted glass background */}
             <div className="absolute inset-0 bg-white/80 backdrop-blur-3xl border-t border-white/60" />
             
@@ -31,6 +32,7 @@ const BottomNav = () => {
                         <NavLink
                             key={path}
                             to={path}
+                            onClick={() => { if (!isActive) Haptics.lightTick(); }}
                             className="relative flex-1 flex flex-col items-center justify-center gap-1 transition-all duration-300 active:scale-90"
                         >
                             {/* Active squishy pill indicator */}

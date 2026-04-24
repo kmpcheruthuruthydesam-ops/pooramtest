@@ -12,6 +12,7 @@ const Expenses = lazy(() => import('./pages/Expenses'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Login = lazy(() => import('./pages/Login'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const Other = lazy(() => import('./pages/Other'));
 
 const PageLoader = ({ message = 'Loading Experience' }) => (
@@ -35,11 +36,16 @@ const App = () => {
     const { isAuthenticated } = useAuth();
     const { isLoading } = useData();
 
+    // Use a single loading check that handles both data sync and lazy loading
+    if (isLoading) {
+        return <PageLoader message="Syncing with Cloud" />;
+    }
+
     return (
         <Suspense fallback={<PageLoader />}>
-            {isLoading && <PageLoader message="Syncing with Cloud" />}
             <Routes>
                 <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/" />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 
                 <Route path="/" element={isAuthenticated ? <Layout /> : <Navigate to="/login" />}>
                     <Route index element={<Dashboard />} />

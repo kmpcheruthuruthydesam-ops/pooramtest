@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Haptics } from '../lib/haptics';
+import divineLogo from '../assets/divine_logo.jpg';
 
 const Sidebar = memo(({ isOpen, setIsOpen, isInstallable, onInstall }) => {
     const { t } = useLanguage();
@@ -48,12 +49,12 @@ const Sidebar = memo(({ isOpen, setIsOpen, isInstallable, onInstall }) => {
     }, [devoteeData]);
 
     const navItems = [
-        { path: '/',           icon: <LayoutDashboard size={20} />, label: t.dashboard  },
-        { path: '/devotees',   icon: <UserRound size={20} />,       label: t.devotees, badge: pendingCount },
-        { path: '/collections',icon: <Coins size={20} />,           label: t.collections },
-        { path: '/expenses',   icon: <ReceiptText size={20} />,     label: t.expenses  },
-        { path: '/other',      icon: <Layers size={20} />,          label: t.other_nav },
-        { path: '/settings',   icon: <SettingsIcon size={20} />,    label: t.settings  },
+        { path: '/', icon: <LayoutDashboard size={20} />, label: t.dashboard },
+        { path: '/devotees', icon: <UserRound size={20} />, label: t.devotees, badge: pendingCount },
+        { path: '/collections', icon: <Coins size={20} />, label: t.collections },
+        { path: '/expenses', icon: <ReceiptText size={20} />, label: t.expenses },
+        { path: '/other', icon: <Layers size={20} />, label: t.other_nav },
+        { path: '/settings', icon: <SettingsIcon size={20} />, label: t.settings },
     ];
 
     return (
@@ -65,19 +66,18 @@ const Sidebar = memo(({ isOpen, setIsOpen, isInstallable, onInstall }) => {
             {/* Fix 9: logo links to dashboard */}
             <div className="flex items-center justify-between mb-8 px-2">
                 <Link to="/" onClick={() => { if (window.innerWidth < 1024) setIsOpen(false); }} className="flex items-center gap-4 group transition-all duration-500">
-                    <div className="w-14 h-14 bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-400 rounded-[22px] flex items-center justify-center text-white text-2xl shadow-[0_15px_35px_-10px_rgba(234,88,12,0.35)] group-hover:shadow-[0_20px_45px_-10px_rgba(234,88,12,0.5)] group-hover:scale-105 group-hover:-rotate-3 transition-all duration-500 relative overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <span className="relative z-10 filter drop-shadow-md">🕉</span>
+                    <div className="w-14 h-14 bg-white rounded-[22px] flex items-center justify-center shadow-[0_15px_35px_-10px_rgba(0,0,0,0.1)] group-hover:shadow-[0_20px_45px_-10px_rgba(234,88,12,0.15)] group-hover:scale-105 group-hover:-rotate-3 transition-all duration-500 relative overflow-hidden border-2 border-white ring-2 ring-orange-500/5 hover:ring-orange-500/20">
+                        <img 
+                            src={divineLogo} 
+                            alt="Divine Logo" 
+                            className="w-full h-full object-cover scale-110 group-hover:scale-100 transition-transform duration-700" 
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/10 to-transparent"></div>
                     </div>
                     <div>
-                        <h2 className="text-2xl font-[900] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-600 bg-clip-text text-transparent tracking-tighter leading-none mb-1.5">TEMPLE</h2>
+                        <h2 className="text-2xl font-[900] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-600 bg-clip-text text-transparent tracking-tighter leading-none mb-1.5 uppercase">Crm</h2>
                         <div className="flex items-center gap-2">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] opacity-80">{t.divine_portal}</p>
-                            {userRole && (
-                                <span className="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter bg-orange-500/10 backdrop-blur-md border border-orange-200/50 text-orange-600 shadow-[0_0_20px_rgba(249,115,22,0.05)]">
-                                    {t.administrator}
-                                </span>
-                            )}
                         </div>
                     </div>
                 </Link>
@@ -97,9 +97,9 @@ const Sidebar = memo(({ isOpen, setIsOpen, isInstallable, onInstall }) => {
                         to={item.path}
                         end={item.path === '/'}
                         aria-current={undefined}
-                        onClick={() => { 
+                        onClick={() => {
                             Haptics.lightTick();
-                            if (window.innerWidth < 1024) setIsOpen(false); 
+                            if (window.innerWidth < 1024) setIsOpen(false);
                         }}
                         className={({ isActive }) => `
                             flex items-center gap-4 px-5 py-3 rounded-2xl font-bold text-sm transition-all duration-300
@@ -136,7 +136,7 @@ const Sidebar = memo(({ isOpen, setIsOpen, isInstallable, onInstall }) => {
                         onClick={onInstall}
                         className="w-full flex items-center gap-4 px-5 py-3 mb-2 rounded-2xl font-bold text-sm bg-orange-50 text-orange-600 hover:bg-orange-100 transition-all duration-300 relative z-20"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
                         Install App
                     </button>
                 )}

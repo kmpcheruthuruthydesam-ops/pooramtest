@@ -5,14 +5,14 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Menu, Phone, MapPin, Eye, EyeOff } from 'lucide-react';
+import { Search, X, Menu, Phone, MapPin, Eye, EyeOff, UserRound, Settings, LogOut } from 'lucide-react';
 import { Haptics } from '../lib/haptics';
 
 const Header = memo(({ title, onMenuClick }) => {
     const { language, setLanguage, t } = useLanguage();
     const { isDarkMode, toggleTheme } = useTheme();
-    const { devoteeData = [], privacyMode, togglePrivacyMode } = useData() || {};
-    const { userRole, currentUsername } = useAuth();
+    const { devoteeData = [], privacyMode, togglePrivacyMode, cloudStatus } = useData() || {};
+    const { userRole, currentUsername, logout } = useAuth();
     const navigate = useNavigate();
 
     const [searchTerm, setSearchTerm] = useState('');
@@ -20,7 +20,9 @@ const Header = memo(({ title, onMenuClick }) => {
     const [results, setResults] = useState([]);
     const [showResults, setShowResults] = useState(false);
     const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
     const searchRef = useRef(null);
+    const profileRef = useRef(null);
 
     // Fix 1a: Debounce search by 200ms
     useEffect(() => {
@@ -45,15 +47,29 @@ const Header = memo(({ title, onMenuClick }) => {
         }
     }, [debouncedTerm, devoteeData]);
 
-    // Click outside closes dropdown
+    // Click outside closes dropdowns
     useEffect(() => {
         const handler = (e) => {
             if (searchRef.current && !searchRef.current.contains(e.target)) {
                 setShowResults(false);
             }
+            if (profileRef.current && !profileRef.current.contains(e.target)) {
+                setIsProfileOpen(false);
+            }
         };
         document.addEventListener('mousedown', handler);
         return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+
+
+    // Close search on escape
+    useEffect(() => {
+        const handler = (e) => {
+            if (e.key === 'Escape') setShowResults(false);
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
     }, []);
 
     const handleSelectDevotee = (id) => {
@@ -94,7 +110,19 @@ const Header = memo(({ title, onMenuClick }) => {
                 >
                     <Menu size={24} />
                 </button>
-                <h2 className="text-lg md:text-2xl font-bold text-slate-800 line-clamp-1 min-w-max">{title}</h2>
+                <h2 className="text-lg md:text-2xl font-bold text-slate-800 line-clamp-1 min-w-max flex items-center gap-3">
+                    {title}
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/50 border border-white/60 rounded-full shadow-sm">
+                        <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                            cloudStatus === 'online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 
+                            cloudStatus === 'connecting' ? 'bg-amber-500' : 'bg-rose-500'
+                        }`} />
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                            {cloudStatus === 'online' ? t.cloud_sync_active : 
+                             cloudStatus === 'connecting' ? t.connecting : t.offline_mode}
+                        </span>
+                    </div>
+                </h2>
 
                 {/* Desktop Search */}
                 <div className="relative group hidden md:block flex-1 max-w-lg ml-4" ref={searchRef}>
@@ -185,59 +213,26 @@ const Header = memo(({ title, onMenuClick }) => {
                     <Search size={20} />
                 </button>
 
-                {/* Platform-Specific Language Switcher */}
-                <div className="flex items-center gap-3">
-                    {/* MOBILE: Morphing Magic Orb (Single Button that flips/spins) */}
-                    <motion.button
-                        layout
-                        onClick={() => { 
-                            import('../lib/haptics').then(m => m.Haptics.lightTick());
-                            setLanguage(language === 'en' ? 'ml' : 'en');
-                        }}
-                        whileTap={{ scale: 0.9, rotate: 180 }}
-                        className="md:hidden w-11 h-11 bg-slate-900/5 backdrop-blur-xl border border-white/60 rounded-full flex items-center justify-center relative overflow-hidden group shadow-sm shadow-slate-200/50"
+                {/* Premium Segmented Language Switcher */}
+                <div className="premium-segmented-pill flex items-center p-1 bg-white/20 backdrop-blur-xl rounded-2xl border border-white/40 shadow-sm relative isolate overflow-hidden select-none">
+                    <motion.div
+                        initial={false}
+                        animate={{ x: language === 'en' ? 0 : 40 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                        className="pill-indicator absolute inset-y-1 left-1 w-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl -z-10 shadow-lg shadow-orange-500/20"
+                    />
+                    <button
+                        onClick={() => { Haptics.lightTick(); setLanguage('en'); }}
+                        className={`w-10 h-7 flex items-center justify-center rounded-xl text-[11px] font-black transition-all relative z-10 ${language === 'en' ? 'text-white' : 'text-slate-500 hover:text-slate-800'}`}
                     >
-                        <AnimatePresence mode='wait'>
-                            <motion.span
-                                key={language}
-                                initial={{ y: 10, opacity: 0, rotate: -45 }}
-                                animate={{ y: 0, opacity: 1, rotate: 0 }}
-                                exit={{ y: -10, opacity: 0, rotate: 45 }}
-                                transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                                className="text-[11px] font-black text-slate-700 tracking-tighter"
-                            >
-                                {language === 'en' ? 'EN' : 'മല'}
-                            </motion.span>
-                        </AnimatePresence>
-                        {/* Glow effect on hover/tap */}
-                        <div className="absolute inset-0 bg-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </motion.button>
-
-                    {/* DESKTOP: High-Fidelity Segmented Pill (Visible only on Tablet/Desktop) */}
-                    <motion.div 
-                        layout
-                        className="hidden md:flex bg-slate-900/5 p-1 rounded-2xl border border-white/60 relative isolate overflow-hidden"
+                        EN
+                    </button>
+                    <button
+                        onClick={() => { Haptics.lightTick(); setLanguage('ml'); }}
+                        className={`w-10 h-7 flex items-center justify-center rounded-xl text-[11px] font-black transition-all relative z-10 ${language === 'ml' ? 'text-white' : 'text-slate-500 hover:text-slate-800'}`}
                     >
-                        <motion.div 
-                            layoutId="indicator"
-                            initial={false}
-                            animate={{ x: language === 'en' ? 0 : '100%' }}
-                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                            className="absolute inset-y-1 left-1 w-[calc(50%-4px)] bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl shadow-lg shadow-orange-200/50 -z-10"
-                        />
-                        <button
-                            onClick={() => setLanguage('en')}
-                            className={`px-4 py-1.5 rounded-xl text-[11px] font-black transition-colors relative z-10 ${language === 'en' ? 'text-white' : 'text-slate-400 hover:text-slate-600'}`}
-                        >
-                            EN
-                        </button>
-                        <button
-                            onClick={() => setLanguage('ml')}
-                            className={`px-4 py-1.5 rounded-xl text-[11px] font-black transition-colors relative z-10 ${language === 'ml' ? 'text-white' : 'text-slate-400 hover:text-slate-600'}`}
-                        >
-                            മല
-                        </button>
-                    </motion.div>
+                        മല
+                    </button>
                 </div>
 
                 <motion.button
@@ -250,19 +245,112 @@ const Header = memo(({ title, onMenuClick }) => {
                     {privacyMode ? <EyeOff size={20} /> : <Eye size={20} />}
                 </motion.button>
 
-                <div className="flex items-center gap-3 pl-4 border-l border-white/40">
-                    <div className="text-right hidden sm:block">
-                        <p className="text-sm font-bold text-slate-800 capitalize">{currentUsername || 'User'}</p>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-                            {t.administrator}
-                        </p>
-                    </div>
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 border-2 border-white shadow-sm flex items-center justify-center overflow-hidden">
-                        <img
-                            src={`https://ui-avatars.com/api/?name=${currentUsername || userRole}&background=f8fafc&color=f97316&bold=true`}
-                            alt={`${currentUsername || 'User'} avatar`}
-                        />
-                    </div>
+                {/* Premium Profile Dropdown */}
+                <div className="relative" ref={profileRef}>
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                            Haptics.lightTick();
+                            setIsProfileOpen(!isProfileOpen);
+                        }}
+                        className="flex items-center gap-3 pl-3 border-l border-white/40 focus:outline-none"
+                    >
+                        <div className="text-right hidden sm:block">
+                            <p className="text-[11px] font-black text-slate-800 capitalize leading-tight">
+                                {currentUsername?.split('@')[0] || 'User'}
+                            </p>
+                            <p className="text-[9px] font-black text-orange-500 uppercase tracking-widest">
+                                {t.administrator || 'Admin'}
+                            </p>
+                        </div>
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 border-2 border-white shadow-sm flex items-center justify-center overflow-hidden ring-2 ring-orange-500/10 hover:ring-orange-500/30 transition-all">
+                            <img
+                                src={`https://ui-avatars.com/api/?name=${currentUsername || userRole}&background=f8fafc&color=f97316&bold=true`}
+                                alt="avatar"
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                    </motion.button>
+
+                    <AnimatePresence>
+                        {isProfileOpen && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: 10, x: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: 10, x: 20 }}
+                                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                                className="absolute right-0 mt-3 w-64 bg-white/80 backdrop-blur-2xl border border-white/60 rounded-3xl shadow-2xl shadow-slate-200/50 overflow-hidden z-[110]"
+                            >
+                                {/* User Header */}
+                                <div className="p-5 border-b border-slate-100/50 bg-gradient-to-br from-orange-50/50 to-transparent">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center overflow-hidden">
+                                            <img
+                                                src={`https://ui-avatars.com/api/?name=${currentUsername || userRole}&background=fff&color=f97316&bold=true`}
+                                                alt="profile"
+                                            />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-black text-slate-900 truncate">
+                                                {currentUsername || 'Administrator'}
+                                            </p>
+                                            <div className="inline-flex items-center px-2 py-0.5 mt-1 bg-orange-500/10 text-orange-600 rounded-lg">
+                                                <span className="text-[10px] font-black uppercase tracking-wider">{t.administrator || 'Admin'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Menu Actions */}
+                                <div className="p-2">
+                                    <button
+                                        onClick={() => {
+                                            Haptics.lightTick();
+                                            setIsProfileOpen(false);
+                                            navigate('/settings');
+                                        }}
+                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all group"
+                                    >
+                                        <div className="w-8 h-8 rounded-xl bg-slate-100 group-hover:bg-white flex items-center justify-center transition-colors">
+                                            <UserRound size={16} />
+                                        </div>
+                                        <span className="text-xs font-bold">{t.profile || 'Profile'}</span>
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            Haptics.lightTick();
+                                            setIsProfileOpen(false);
+                                            navigate('/settings');
+                                        }}
+                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all group"
+                                    >
+                                        <div className="w-8 h-8 rounded-xl bg-slate-100 group-hover:bg-white flex items-center justify-center transition-colors">
+                                            <Settings size={16} />
+                                        </div>
+                                        <span className="text-xs font-bold">{t.settings || 'Settings'}</span>
+                                    </button>
+
+                                    <div className="my-2 border-t border-slate-100/50" />
+
+                                    <button
+                                        onClick={() => {
+                                            Haptics.heavyTap();
+                                            setIsProfileOpen(false);
+                                            logout();
+                                        }}
+                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-red-500 hover:bg-red-50 transition-all group"
+                                    >
+                                        <div className="w-8 h-8 rounded-xl bg-red-50 group-hover:bg-white flex items-center justify-center transition-colors">
+                                            <LogOut size={16} />
+                                        </div>
+                                        <span className="text-xs font-black">{t.logout || 'Logout'}</span>
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
 

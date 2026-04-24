@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Inter:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@100..900&family=Poppins:wght@100..900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -24,17 +24,23 @@
 
 @layer base {
   body {
-    @apply font-inter antialiased h-full transition-colors duration-500;
+    @apply font-inter antialiased min-h-screen transition-colors duration-500;
     color: var(--text-main);
     background: var(--bg-main);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -webkit-tap-highlight-color: transparent;
     letter-spacing: -0.01em;
+    margin: 0;
+    padding: 0;
   }
 
   .font-serif {
-    font-family: 'EB Garamond', serif;
+    font-family: 'Instrument Serif', serif;
+  }
+
+  .font-poppins {
+    font-family: 'Poppins', sans-serif;
   }
 
   /* Hyper-Premium Mesh Gradient Foundation */
@@ -129,14 +135,77 @@
 
       /* Floating Glass Search */
       .glass-search-container {
-        @apply relative z-[35] mx-4 mb-10;
-        filter: drop-shadow(0 12px 24px rgba(0,0,0,0.1));
+        @apply sticky top-[-1px] z-[35] mx-4 mb-4;
+        filter: drop-shadow(0 8px 16px rgba(0,0,0,0.06));
+        transition: all 0.3s ease;
       }
+      
+      .glass-search-container.is-sticky {
+        @apply mx-0 rounded-none border-x-0 border-t-0 backdrop-blur-3xl;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 4px 12px -2px rgba(0,0,0,0.05);
+      }
+  }
+
+  /* Form Shake Animation */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+  }
+  .animate-shake {
+    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
   }
 
   /* Safe area for bottom nav (iPhone notch) */
   .safe-area-bottom {
       padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* ─── Ultra-Premium Aura Background ─── */
+  .aura-mesh {
+    @apply fixed inset-0 z-[-1] pointer-events-none overflow-hidden bg-slate-50;
+  }
+
+  .aura-blob {
+    @apply absolute w-[80%] h-[80%] rounded-full opacity-20 blur-[120px] mix-blend-multiply;
+    animation: aura-float 30s infinite alternate ease-in-out;
+  }
+
+  @keyframes aura-float {
+    0% { transform: translate(-20%, -20%) scale(1) rotate(0deg); }
+    50% { transform: translate(10%, 20%) scale(1.2) rotate(180deg); }
+    100% { transform: translate(30%, -10%) scale(0.8) rotate(360deg); }
+  }
+
+  /* ─── Texture & Noise ─── */
+  .noise-overlay {
+    @apply fixed inset-0 z-0 pointer-events-none opacity-[0.035] contrast-150 brightness-100;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
+
+
+
+  /* ─── Divine Light Sweep ─── */
+  .light-sweep {
+    @apply relative overflow-hidden;
+  }
+
+  .light-sweep::after {
+    @apply content-[''] absolute inset-0 -translate-x-full z-10;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    animation: sweep 8s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes sweep {
+    0% { transform: translateX(-150%) skewX(-15deg); }
+    15%, 100% { transform: translateX(150%) skewX(-15deg); }
   }
 
   /* Smooth touch feedback - Premium iOS feel */
@@ -229,20 +298,52 @@
     }
   }
 
-  /* ═══ Phase 4: Dynamic Island & Ultra-Premium Utilities ═══ */
-  .dynamic-island {
-    @apply fixed top-2 left-1/2 -translate-x-1/2 z-[200] bg-slate-900/95 backdrop-blur-3xl 
-           border border-white/10 shadow-2xl transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)];
-    box-shadow: 0 0.5px 0 0 rgba(255,255,255,0.1) inset, 0 12px 32px rgba(0,0,0,0.5);
-  }
 
   .shadow-glow-orange {
     box-shadow: 0 0 20px rgba(249, 115, 22, 0.2), 0 12px 24px rgba(249, 115, 22, 0.1);
   }
 
+
   /* Squishy spring physics simulation */
   .squishy-spring {
     transition: all 0.5s cubic-bezier(0.68, -0.6, 0.32, 1.6);
+  }
+
+  /* Glass-Mesh Language Switcher */
+  .premium-segmented-pill {
+    @apply flex items-center bg-white/10 backdrop-blur-xl p-1 rounded-2xl border border-white/20 relative isolate overflow-hidden select-none;
+    box-shadow: 
+      0 1px 1px rgba(0,0,0,0.02),
+      inset 0 0.5px 0.5px rgba(255,255,255,0.1);
+  }
+
+  .pill-indicator {
+    @apply absolute inset-y-1 bg-gradient-to-br from-orange-500/80 to-orange-600/80 rounded-xl -z-10;
+    backdrop-filter: saturate(1.8) blur(4px);
+    box-shadow: 0 4px 15px -1px rgba(249,115,22,0.25);
+  }
+
+  /* Skeleton Loading State */
+  .skeleton-pulse {
+    @apply bg-slate-200/50 overflow-hidden relative;
+  }
+
+  .skeleton-pulse::after {
+    @apply content-[''] absolute inset-0 -translate-x-full;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0,
+      rgba(255, 255, 255, 0.2) 20%,
+      rgba(255, 255, 255, 0.5) 60%,
+      rgba(255, 255, 255, 0)
+    );
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
   }
 
   /* Depth parallax layer */
@@ -293,3 +394,73 @@
 .hide-scrollbar::-webkit-scrollbar {
     display: none;
 }
+
+/* ─── NATIVE PRINT SYSTEM ────────────────────────────────────────────────── */
+@media print {
+    /* Step 1: Hide everything that should not be on paper */
+    nav, footer, header, aside, .sidebar, .bottom-nav, .fab-container, 
+    .glass-search-container, .aura-mesh, .noise-overlay, .mesh-container,
+    [role="dialog"] button, [role="dialog"] h3, .sticky {
+        display: none !important;
+    }
+
+    /* Step 2: Global reset to strip margins/padding and offsets */
+    html, body {
+        background: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    /* Keep the structural containers but remove their styling impacts */
+    #root, main, [role="dialog"] {
+        position: static !important;
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+        overflow: visible !important;
+        background: white !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    /* Hide the page content behind the modal */
+    main > div:first-of-type {
+        display: none !important;
+    }
+
+    /* Step 3: Target the receipt specifically and anchor to top */
+    #printable-receipt {
+        display: block !important;
+        visibility: visible !important;
+        position: relative !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        max-width: 600px !important;
+        margin: 0 auto !important;
+        padding: 40px !important;
+        background: white !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        z-index: 10000 !important;
+    }
+
+    /* Force background colors and transparency adjustments */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    /* Page Setup */
+    @page {
+        margin: 0;
+        size: auto;
+    }
+}
+
+

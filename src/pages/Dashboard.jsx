@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useData } from '../context/DataContext';
 import { useLanguage } from '../context/LanguageContext';
 import MetricCard from '../components/MetricCard';
+import divineLogo from '../assets/divine_logo.jpg';
 import { Users, IndianRupee, Clock, Wallet, TrendingUp, PieChart as PieIcon, UserPlus, BadgeIndianRupee, AlertCircle, MessageSquare } from 'lucide-react';
 import { Line, Doughnut } from 'react-chartjs-2';
 import { motion } from 'framer-motion';
@@ -20,6 +21,7 @@ import {
 import PendingPayments from '../components/PendingPayments';
 import ActivityFeed from '../components/ActivityFeed';
 import { useNavigate } from 'react-router-dom';
+import { Haptics } from '../lib/haptics';
 
 ChartJS.register(
   CategoryScale,
@@ -34,7 +36,7 @@ ChartJS.register(
 );
 
 const Dashboard = () => {
-    const { devoteeData = [], privacyMode, maskValue } = useData() || {};
+    const { devoteeData = [], privacyMode, maskValue, isLoading } = useData() || {};
     const { t } = useLanguage();
     const navigate = useNavigate();
 
@@ -151,10 +153,29 @@ const Dashboard = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
                 >
-                    <h1 className="text-5xl md:text-6xl font-serif text-slate-800 tracking-tight leading-tight mb-3">
-                        {t.welcome_title} <span className="text-orange-500 italic">Om.</span>
-                    </h1>
-                    <p className="text-slate-400 font-medium text-lg leading-relaxed max-w-lg">{t.welcome_subtitle}</p>
+                    <div className="flex items-center gap-6 mb-8">
+                        <div className="w-20 h-20 md:w-24 md:h-24 bg-white border-2 border-orange-50 rounded-[32px] overflow-hidden shadow-2xl shadow-orange-100 flex-shrink-0">
+                            <img src={divineLogo} alt="Temple Logo" className="w-full h-full object-cover" />
+                        </div>
+                        <h1 className="flex flex-col gap-0 font-poppins">
+                            <div className="flex flex-wrap items-baseline gap-x-3">
+                                <span className="text-3xl md:text-6xl font-black text-slate-900 tracking-tighter leading-none">
+                                    Kozhimamparamb
+                                </span>
+                                <span className="text-3xl md:text-6xl font-black text-orange-500 tracking-tighter leading-none">
+                                    Pooram
+                                </span>
+                            </div>
+                            <span className="text-xs md:text-sm font-black tracking-[0.4em] text-slate-400 uppercase mt-3 block">
+                                Cheruthuruthy Desam
+                            </span>
+                        </h1>
+                    </div>
+                    <div className="max-w-lg border-l-2 border-orange-500/20 pl-6 py-1">
+                        <p className="text-slate-500 font-medium text-base md:text-lg leading-relaxed">
+                            {t.welcome_subtitle}
+                        </p>
+                    </div>
                 </motion.div>
 
 
@@ -177,6 +198,7 @@ const Dashboard = () => {
                         trendData={[800, 850, 900, 920, 950, Number(stats.totalDevotees)]}
                         change={5.2}
                         large
+                        isLoading={isLoading}
                     />
                 </motion.div>
 
@@ -193,6 +215,7 @@ const Dashboard = () => {
                         value={`₹${Number(stats.totalPaid).toLocaleString()}`} 
                         trendData={monthlyCollectionData.data}
                         change={momTrend?.pct || 0}
+                        isLoading={isLoading}
                     />
                 </motion.div>
 
@@ -208,6 +231,7 @@ const Dashboard = () => {
                         label={t.total_pending} 
                         value={`₹${Number(stats.totalPending).toLocaleString()}`} 
                         trendData={[1500000, 1800000, 2000000, 2100000, Number(stats.totalPending)]}
+                        isLoading={isLoading}
                     />
                 </motion.div>
 
@@ -222,13 +246,14 @@ const Dashboard = () => {
                         icon={<Wallet size={24} />} 
                         label={t.total_expected} 
                         value={`₹${Number(stats.totalExpected).toLocaleString()}`} 
+                        isLoading={isLoading}
                     />
                 </motion.div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 glass-card p-8 dashboard-chart">
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                         <div>
                             <h3 className="text-xl font-bold text-slate-800 flex items-center gap-3">
                                 <TrendingUp className="text-orange-500" /> {t.collection_trend}
@@ -241,13 +266,16 @@ const Dashboard = () => {
                                 <p className="text-sm text-slate-400 font-medium">{t.revenue_analysis}</p>
                             )}
                         </div>
-                        {/* Fix 10: date range segmented control */}
-                        <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
+                        {/* Date range segmented control - scrollable on mobile */}
+                        <div className="flex bg-slate-100 p-1 rounded-[16px] gap-1 self-start sm:self-auto overflow-x-auto no-scrollbar max-w-full">
                             {[['3m','3M'],['6m','6M'],['1y','1Y'],['all','All']].map(([val, lbl]) => (
                                 <button
                                     key={val}
-                                    onClick={() => setChartRange(val)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all ${chartRange === val ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                    onClick={() => {
+                                        Haptics.lightTick();
+                                        setChartRange(val);
+                                    }}
+                                    className={`px-4 py-1.5 rounded-xl text-[11px] font-black transition-all shrink-0 ${chartRange === val ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                                 >
                                     {lbl}
                                 </button>

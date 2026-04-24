@@ -4,7 +4,7 @@ import { useData } from '../context/DataContext';
 import { Eye, EyeOff, TrendingUp, TrendingDown } from 'lucide-react';
 import Sparkline from './Sparkline';
 
-const MetricCard = memo(({ icon, label, value, type = 'orange', allowPrivacy = true, onClick, large = false, trendData = [], change = 0 }) => {
+const MetricCard = memo(({ icon, label, value, type = 'orange', allowPrivacy = true, onClick, large = false, trendData = [], change = 0, isLoading = false }) => {
     const { privacyMode, togglePrivacyMode } = useData() || {};
 
     const colorConfigs = {
@@ -30,7 +30,12 @@ const MetricCard = memo(({ icon, label, value, type = 'orange', allowPrivacy = t
                 glass-card flex flex-col justify-between h-full transition-all duration-500 group relative overflow-hidden
                 ${large ? 'p-8 gap-8' : 'p-6 gap-4'}
             `}
-            onClick={onClick}
+            onClick={(e) => {
+                if (onClick) {
+                    Haptics.lightTick();
+                    onClick(e);
+                }
+            }}
         >
             {/* Background Decorative Sparkline for Large Cards */}
             {large && trendData.length > 0 && (
@@ -43,11 +48,12 @@ const MetricCard = memo(({ icon, label, value, type = 'orange', allowPrivacy = t
                 <div className={`
                     rounded-2xl flex items-center justify-center bg-gradient-to-br ${colors.iconBg} ${colors.text} shadow-sm shrink-0
                     ${large ? 'w-16 h-16' : 'w-12 h-12'}
+                    ${isLoading ? 'skeleton-pulse' : ''}
                 `}>
-                    <div className={large ? 'scale-125' : 'scale-90'}>{icon}</div>
+                    {!isLoading && <div className={large ? 'scale-125' : 'scale-90'}>{icon}</div>}
                 </div>
 
-                {!large && trendData.length > 0 && (
+                {!large && trendData.length > 0 && !isLoading && (
                     <div className="mt-2">
                         <Sparkline data={trendData} color={colors.spark} width={80} height={30} />
                     </div>
@@ -56,8 +62,12 @@ const MetricCard = memo(({ icon, label, value, type = 'orange', allowPrivacy = t
             
             <div className="flex-1 min-w-0 z-10">
                 <div className="flex items-center justify-between mb-1">
-                    <p className={`font-black text-slate-400 uppercase tracking-[0.12em] ${large ? 'text-xs' : 'text-[10px]'}`}>{label}</p>
-                    {change !== 0 && (
+                    {isLoading ? (
+                        <div className="h-3 w-20 skeleton-pulse rounded-md" />
+                    ) : (
+                        <p className={`font-black text-slate-400 uppercase tracking-[0.12em] ${large ? 'text-xs' : 'text-[10px]'}`}>{label}</p>
+                    )}
+                    {change !== 0 && !isLoading && (
                         <div className={`flex items-center gap-0.5 font-black text-[10px] ${change > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
                             {change > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
                             {Math.abs(change)}%
@@ -65,11 +75,15 @@ const MetricCard = memo(({ icon, label, value, type = 'orange', allowPrivacy = t
                     )}
                 </div>
                 
-                <div className="flex items-center gap-1.5">
-                    <p className={`font-black tracking-tight leading-none text-slate-900 ${large ? 'text-4xl md:text-5xl' : 'text-[24px]'}`}>
-                        {maskedValue || '0'}
-                    </p>
-                    {allowPrivacy && (
+                <div className="flex items-center gap-1.5 min-h-[30px]">
+                    {isLoading ? (
+                        <div className={`h-8 w-32 skeleton-pulse rounded-lg`} />
+                    ) : (
+                        <p className={`font-black tracking-tight leading-none text-slate-900 ${large ? 'text-4xl md:text-5xl' : 'text-[24px]'}`}>
+                            {maskedValue || '0'}
+                        </p>
+                    )}
+                    {allowPrivacy && !isLoading && (
                         <button
                             onClick={(e) => { e.stopPropagation(); togglePrivacyMode(); }}
                             className="p-1 text-slate-300 hover:text-orange-500 rounded-md transition-all opacity-0 group-hover:opacity-100"

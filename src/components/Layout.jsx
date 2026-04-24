@@ -11,6 +11,7 @@ import { useData } from '../context/DataContext';
 import CommandPalette from './CommandPalette';
 import BottomNav from './BottomNav';
 import { Flame, Zap } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Layout = () => {
     const location = useLocation();
@@ -51,7 +52,6 @@ const Layout = () => {
             e.preventDefault();
             setDeferredPrompt(e);
             setIsInstallable(true);
-            console.log('PWA: beforeinstallprompt event captured');
         };
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -59,7 +59,6 @@ const Layout = () => {
         window.addEventListener('appinstalled', () => {
             setDeferredPrompt(null);
             setIsInstallable(false);
-            console.log('PWA: installed successfully');
         });
 
         // PWA: Listen for service worker updates
@@ -69,8 +68,15 @@ const Layout = () => {
                     const newWorker = reg.installing;
                     newWorker.addEventListener('statechange', () => {
                         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            console.log('PWA: New update available');
                             setUpdateAvailable(true);
+                            toast('System Update Available', {
+                                description: 'A new version of the CRM is ready. Refresh to update.',
+                                action: {
+                                    label: 'Update Now',
+                                    onClick: () => window.location.reload()
+                                },
+                                duration: Infinity,
+                            });
                         }
                     });
                 });
@@ -157,11 +163,6 @@ const Layout = () => {
                 isInstallable={isInstallable}
                 onInstall={handleInstallClick}
             />
-            
-            <DynamicIsland 
-                updateAvailable={updateAvailable} 
-                onUpdate={handleUpdate} 
-            />
 
             <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 lg:pl-72 focus:outline-none">
                 <Header title={getTitle()} onMenuClick={() => setIsSidebarOpen(true)} />
@@ -221,46 +222,6 @@ const Layout = () => {
                 </div>
             </Modal>
         </div>
-    );
-};
-
-/* ═══ Phase 4: Dynamic Island Component ═══ */
-const DynamicIsland = ({ updateAvailable, onUpdate }) => {
-    const { islandTip } = useData();
-    const [isVisible, setIsVisible] = useState(false);
-    const [content, setContent] = useState({ title: 'Jai Mahadeva', type: 'system' });
-
-    useEffect(() => {
-        if (updateAvailable) {
-            setContent({ title: 'App Update Available', type: 'update' });
-            setIsVisible(true);
-        } else if (islandTip?.show) {
-            setContent({ title: islandTip.title, type: islandTip.type });
-            setIsVisible(true);
-        } else {
-            setIsVisible(false);
-        }
-    }, [islandTip, updateAvailable]);
-
-    return (
-        <AnimatePresence>
-            {isVisible && (
-                <motion.div
-                    layoutId="dynamicIsland"
-                    initial={{ scale: 0.4, opacity: 0, y: -20, x: '-50%' }}
-                    animate={{ scale: 1, opacity: 1, y: 0, x: '-50%' }}
-                    exit={{ scale: 0.6, opacity: 0, y: -10, x: '-50%' }}
-                    onClick={content.type === 'update' ? onUpdate : undefined}
-                    className={`dynamic-island px-6 py-2 rounded-full flex items-center gap-3 transition-colors ${content.type === 'update' ? 'cursor-pointer hover:bg-orange-600 active:scale-95 pointer-events-auto' : 'pointer-events-none'}`}
-                    transition={{ type: "spring", stiffness: 450, damping: 28 }}
-                >
-                    <div className={`w-2.5 h-2.5 rounded-full animate-pulse shadow-sm ${content.type === 'error' ? 'bg-rose-500 shadow-rose-500' : content.type === 'update' ? 'bg-emerald-500 shadow-emerald-500' : 'bg-orange-500 shadow-orange-500'}`} />
-                    <span className="text-white text-[11px] font-black uppercase tracking-[0.25em]">
-                        {content.type === 'update' ? 'TAP TO UPDATE APP' : content.title}
-                    </span>
-                </motion.div>
-            )}
-        </AnimatePresence>
     );
 };
 

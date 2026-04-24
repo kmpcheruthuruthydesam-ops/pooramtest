@@ -98,22 +98,28 @@ export const AuthProvider = ({ children }) => {
         return { success: !error, error: error?.message };
     };
 
+    const signInWithGoogle = async () => {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: window.location.origin,
+            }
+        });
+        if (error) console.error('Google Sign-In Error:', error.message);
+    };
+
+    // ── Timeout safety: if Supabase takes > 5s, proceed anyway ──
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            setAuthReady(true);
+        }, 5000);
+        return () => clearTimeout(timeout);
+    }, []);
+
     if (!authReady) {
         return (
-            <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
-                <div className="w-16 h-16 border-4 border-slate-100 border-t-orange-500 rounded-full animate-spin mb-6"></div>
-                <h2 className="text-xl font-black text-slate-800 mb-2">Connecting to Cloud...</h2>
-                <p className="text-slate-500 text-sm max-w-xs mb-8">
-                    If this takes too long, please check your <strong>.env</strong> file and ensure your Supabase URL and Key are correct.
-                </p>
-                <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 text-left w-full max-w-md">
-                    <p className="text-xs font-bold text-amber-800 uppercase tracking-widest mb-2">Troubleshooting</p>
-                    <ul className="text-xs text-amber-900/70 space-y-2 font-medium">
-                        <li>• Check if VITE_SUPABASE_URL starts with https://</li>
-                        <li>• Ensure VITE_SUPABASE_ANON_KEY is correct</li>
-                        <li>• Restart your dev server after editing .env</li>
-                    </ul>
-                </div>
+            <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-50">
+                <div className="w-10 h-10 border-4 border-slate-100 border-t-orange-500 rounded-full animate-spin"></div>
             </div>
         );
     }
@@ -126,7 +132,8 @@ export const AuthProvider = ({ children }) => {
             login, 
             logout, 
             changePassword,
-            sendPasswordResetEmail
+            sendPasswordResetEmail,
+            signInWithGoogle
         }}>
             {children}
         </AuthContext.Provider>

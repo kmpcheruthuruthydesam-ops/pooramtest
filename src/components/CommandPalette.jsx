@@ -10,28 +10,18 @@ import {
     Coins, 
     ReceiptText, 
     Settings, 
-    Command
+    Command,
+    ArrowRight
 } from 'lucide-react';
 
 const CommandPalette = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [query, setQuery] = useState('');
+    const [activeIndex, setActiveIndex] = useState(0);
     const { devoteeData = [] } = useData() || {};
     const { t } = useLanguage();
     const navigate = useNavigate();
     const inputRef = useRef(null);
-
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-                e.preventDefault();
-                setIsOpen(prev => !prev);
-            }
-            if (e.key === 'Escape') setIsOpen(false);
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
 
     const filteredDevotees = query.trim().length > 0
         ? devoteeData.filter(d => 
@@ -47,6 +37,45 @@ const CommandPalette = () => {
         { name: t.expenses, icon: <ReceiptText size={18} />, path: '/expenses' },
         { name: t.settings, icon: <Settings size={18} />, path: '/settings' },
     ].filter(p => p.name.toLowerCase().includes(query.toLowerCase()));
+
+    const allItems = [...pages.map(p => ({ ...p, type: 'page' })), ...filteredDevotees.map(d => ({ ...d, type: 'devotee' }))];
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                setIsOpen(prev => !prev);
+                setActiveIndex(0);
+            }
+            if (!isOpen) return;
+
+            if (e.key === 'Escape') setIsOpen(false);
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setActiveIndex(prev => (prev + 1) % (allItems.length || 1));
+            }
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setActiveIndex(prev => (prev - 1 + allItems.length) % (allItems.length || 1));
+            }
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const selected = allItems[activeIndex];
+                if (selected) {
+                    handleSelect(selected.type === 'page' ? selected.path : `/profile/${selected.id}`);
+                }
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, allItems, activeIndex]);
+
+    useEffect(() => {
+        if (isOpen) {
+            setActiveIndex(0);
+        }
+    }, [isOpen, query]);
 
     const handleSelect = (path) => {
         navigate(path);
@@ -91,41 +120,51 @@ const CommandPalette = () => {
                             {pages.length > 0 && (
                                 <div className="mb-4">
                                     <p className="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.navigation}</p>
-                                    {pages.map(page => (
-                                        <button
-                                            key={page.path}
-                                            onClick={() => handleSelect(page.path)}
-                                            className="w-full px-4 py-3 flex items-center gap-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left group"
-                                        >
-                                            <div className="w-9 h-9 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover:text-orange-500 transition-colors">
-                                                {page.icon}
-                                            </div>
-                                            <span className="font-bold text-slate-700 dark:text-slate-200">{page.name}</span>
-                                        </button>
-                                    ))}
+                                    {pages.map((page, idx) => {
+                                        const isSelected = activeIndex === idx;
+                                        return (
+                                            <button
+                                                key={page.path}
+                                                onClick={() => handleSelect(page.path)}
+                                                className={`w-full px-4 py-3 flex items-center gap-4 rounded-xl transition-all text-left group ${isSelected ? 'bg-orange-50 dark:bg-orange-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}
+                                            >
+                                                <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${isSelected ? 'bg-orange-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 group-hover:text-orange-500'}`}>
+                                                    {page.icon}
+                                                </div>
+                                                <span className={`font-bold ${isSelected ? 'text-orange-600 dark:text-orange-400' : 'text-slate-700 dark:text-slate-200'}`}>{page.name}</span>
+                                                {isSelected && <ArrowRight size={14} className="ml-auto text-orange-500" />}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             )}
 
                             {filteredDevotees.length > 0 && (
                                 <div>
                                     <p className="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.devotees}</p>
-                                    {filteredDevotees.map(devotee => (
-                                        <button
-                                            key={devotee.id}
-                                            onClick={() => handleSelect(`/profile/${devotee.id}`)}
-                                            className="w-full px-4 py-3 flex items-center gap-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left group"
-                                        >
-                                            <div className="w-9 h-9 bg-orange-50 dark:bg-orange-900/20 rounded-lg flex items-center justify-center text-orange-500 font-black text-xs">
-                                                {devotee.name.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-slate-700 dark:text-slate-200">{devotee.name}</p>
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">#{devotee.id}</p>
-                                            </div>
-                                        </button>
-                                    ))}
+                                    {filteredDevotees.map((devotee, idx) => {
+                                        const actualIndex = pages.length + idx;
+                                        const isSelected = activeIndex === actualIndex;
+                                        return (
+                                            <button
+                                                key={devotee.id}
+                                                onClick={() => handleSelect(`/profile/${devotee.id}`)}
+                                                className={`w-full px-4 py-3 flex items-center gap-4 rounded-xl transition-all text-left group ${isSelected ? 'bg-orange-50 dark:bg-orange-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}
+                                            >
+                                                <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-black text-xs transition-colors ${isSelected ? 'bg-orange-500 text-white' : 'bg-orange-50 dark:bg-orange-900/20 text-orange-500'}`}>
+                                                    {devotee.name.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <p className={`font-bold ${isSelected ? 'text-orange-600 dark:text-orange-400' : 'text-slate-700 dark:text-slate-200'}`}>{devotee.name}</p>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">#{devotee.id}</p>
+                                                </div>
+                                                {isSelected && <ArrowRight size={14} className="ml-auto text-orange-500" />}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             )}
+
 
                             {query && pages.length === 0 && filteredDevotees.length === 0 && (
                                 <div className="py-12 text-center">

@@ -48,6 +48,7 @@ const DevoteeList = () => {
     const [editingDevotee, setEditingDevotee] = useState(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [devoteeToDelete, setDevoteeToDelete] = useState(null);
+    const [isSticky, setIsSticky] = useState(false);
 
     // Fix 4: sort state
     const [sort, setSort] = useState({ field: null, dir: 'asc' });
@@ -57,7 +58,20 @@ const DevoteeList = () => {
         const timer = setTimeout(() => {
             setDebouncedTerm(searchTerm);
         }, 200);
-        return () => clearTimeout(timer);
+
+        const handleScroll = () => {
+            const container = document.querySelector('.glass-search-container');
+            if (container) {
+                // Check if sticky by position or threshold
+                setIsSticky(window.scrollY > 10);
+            }
+        };
+        window.addEventListener('scroll', handleScroll);
+        
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener('scroll', handleScroll);
+        };
     }, [searchTerm]);
 
     const handleSort = (field) => {
@@ -120,9 +134,9 @@ const DevoteeList = () => {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="flex flex-col">
             {/* ═══ FLOATING SEARCH BAR (iOS Style) ═══ */}
-            <div className="glass-search-container z-[45]">
+            <div className={`glass-search-container ${isSticky ? 'is-sticky' : ''}`}>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white/60 backdrop-blur-3xl p-4 md:p-2 rounded-[28px] border border-white/80 shadow-2xl shadow-slate-200/50">
                     <div className="flex items-center bg-white px-4 py-2.5 rounded-[22px] border border-slate-100 shadow-sm flex-1 md:w-80 group focus-within:border-orange-500/50 focus-within:shadow-[0_0_20px_rgba(249,115,22,0.1)] transition-all duration-300 relative">
                         <Search className="text-slate-300 group-focus-within:text-orange-500 transition-colors shrink-0" size={18} />
@@ -136,7 +150,7 @@ const DevoteeList = () => {
                         />
                         {searchTerm && (
                             <button
-                                onClick={() => { setSearchTerm(''); setCurrentPage(1); }}
+                                onClick={() => { Haptics.lightTick(); setSearchTerm(''); setCurrentPage(1); }}
                                 aria-label="Clear search"
                                 className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 transition-colors"
                             >
@@ -145,32 +159,42 @@ const DevoteeList = () => {
                         )}
                     </div>
                     
-                    <div className="grid grid-cols-2 md:flex md:items-center gap-2.5">
-                        <select
-                            className="bg-white/80 border border-slate-100 rounded-[20px] px-4 py-3 md:py-2 text-[12px] md:text-[13px] font-black text-slate-600 cursor-pointer focus:ring-2 focus:ring-orange-500/20"
-                            value={statusFilter}
-                            onChange={(e) => { 
-                                Haptics.lightTick();
-                                setStatusFilter(e.target.value); 
-                                setCurrentPage(1); 
-                            }}
-                        >
-                            <option value="All">{t.all_status}</option>
-                            <option value="Paid">{t.paid}</option>
-                            <option value="Pending">{t.pending}</option>
-                            <option value="Nirapara">{t.nirapara}</option>
-                        </select>
-                        <button
+                    <div className="flex items-center gap-2">
+                        {/* Status Filter */}
+                        <div className="relative flex-1 md:flex-none">
+                            <select
+                                aria-label="Filter status"
+                                className="w-full pl-4 pr-10 py-3 md:py-2.5 bg-white/80 border border-slate-100 rounded-[22px] text-[12px] md:text-[13px] font-black text-slate-600 cursor-pointer focus:ring-2 focus:ring-orange-500/20 appearance-none"
+                                value={statusFilter}
+                                onChange={(e) => { 
+                                    Haptics.lightTick();
+                                    setStatusFilter(e.target.value); 
+                                    setCurrentPage(1); 
+                                }}
+                            >
+                                <option value="All">{t.all_status}</option>
+                                <option value="Paid">{t.paid}</option>
+                                <option value="Pending">{t.pending}</option>
+                                <option value="Nirapara">{t.nirapara}</option>
+                            </select>
+                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                        </div>
+
+                        {/* Add User Button - Compact icon on mobile */}
+                        <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
                             onClick={() => { Haptics.lightTick(); setIsAddModalOpen(true); }}
-                            className="flex items-center justify-center gap-1.5 px-4 py-3 md:py-2.5 bg-orange-500 text-white rounded-[22px] font-black text-[12px] md:text-[13px] shadow-lg shadow-orange-200 active:scale-95 transition-all truncate"
+                            className="bg-gradient-to-br from-orange-500 to-orange-600 text-white px-4 md:px-6 py-3 md:py-2.5 rounded-[22px] shadow-lg shadow-orange-500/20 border border-orange-400/50 transition-all text-[12px] md:text-[13px] font-black flex items-center justify-center gap-2 active:scale-95"
                         >
-                            <UserPlus size={16} /> <span className="truncate">{t.add_devotee}</span>
-                        </button>
+                            <UserPlus size={18} />
+                            <span className="hidden md:block uppercase tracking-wider">{t.add_devotee}</span>
+                        </motion.button>
                     </div>
                 </div>
             </div>
 
-            <div className="glass-card overflow-hidden">
+            <div className="glass-card overflow-hidden mt-8">
                 {/* ═══ MOBILE CARD VIEW (iOS Style) ═══ */}
                 <div className="md:hidden">
                     {currentRows.length > 0 ? (
@@ -188,6 +212,7 @@ const DevoteeList = () => {
                                         <button 
                                             onClick={(e) => {
                                                 e.preventDefault();
+                                                Haptics.heavyTap();
                                                 deleteDevotee(devotee.id);
                                             }}
                                             className="w-10 h-10 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-lg active:scale-90 transition-transform"

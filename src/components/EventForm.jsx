@@ -63,8 +63,11 @@ const EventForm = ({ devoteeId, initialType = 'Pooram', onSuccess, existingEvent
             updateDevotee(updatedDevotee);
             toast.success(t.record_updated || 'Record updated successfully');
         } else {
+            // Improved ID generation: Timestamp (hex) + Random string
+            const timestamp = Date.now().toString(36).toUpperCase();
+            const randomStr = Math.random().toString(36).substring(2, 5).toUpperCase();
             const newEvent = {
-                id: `REC-${Date.now().toString().slice(-6)}`,
+                id: `REC-${timestamp}-${randomStr}`,
                 date, year, type, book, leaf,
                 paid: paidAmount, unpaid: unpaidAmount,
                 remark,

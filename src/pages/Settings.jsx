@@ -113,16 +113,6 @@ const Settings = () => {
         if (pendingAction === 'migrate') await migrateLocalToCloud();
     };
 
-    const logCurrentState = () => {
-        console.group('🛠️ Temple CRM - Debug State');
-        console.log('User Role:', userRole);
-        console.log('Username:', currentUsername);
-        console.log('Devotees Count:', devoteeData.length);
-        console.log('Raw Data:', devoteeData);
-        console.groupEnd();
-        toast.success(t.view_state_log);
-    };
-
     const handleFileImport = (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -244,9 +234,9 @@ const Settings = () => {
         e.target.value = '';
     };
 
-    const handleExcelImportConfirm = () => {
+    const handleExcelImportConfirm = async () => {
         if (!excelBuffer) return;
-        const result = importFromExcel(excelBuffer);
+        const result = await importFromExcel(excelBuffer);
         setImportResult(result);
     };
 
@@ -331,8 +321,8 @@ const Settings = () => {
                                 <FileSpreadsheet size={20} />
                             </div>
                             <div>
-                                <h3 className="text-[15px] font-bold text-slate-900">Excel Export/Import</h3>
-                                <p className="text-[11px] font-medium text-slate-400">Manage records via spreadsheets</p>
+                                <h3 className="text-[15px] font-bold text-slate-900">{t.excel_mgmt}</h3>
+                                <p className="text-[11px] font-medium text-slate-400">{t.excel_mgmt_desc}</p>
                             </div>
                         </div>
 
@@ -486,7 +476,7 @@ const Settings = () => {
                     <ShieldCheck size={14} className="text-orange-500" />
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.quick_action_portal} v2.8</span>
                 </div>
-                <p className="text-[9px] font-bold text-slate-300 uppercase tracking-tight">KMP CHERUTHURUTHY DESAM COMMITTEE</p>
+                <p className="text-[9px] font-bold text-slate-300 uppercase tracking-tight">Kozhimamparamb pooram cheruthuruthy desam</p>
             </div>
 
             {/* ── Confirm Action Modal ─────────────────────────────── */}

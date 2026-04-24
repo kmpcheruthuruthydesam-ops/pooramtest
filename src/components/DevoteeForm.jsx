@@ -24,6 +24,7 @@ const DevoteeForm = ({ devotee, onSuccess }) => {
 
     // Fix 2: inline validation errors
     const [errors, setErrors] = useState({});
+    const [isShaking, setIsShaking] = useState(false);
 
     useEffect(() => {
         if (devotee) {
@@ -52,6 +53,9 @@ const DevoteeForm = ({ devotee, onSuccess }) => {
         const errs = validate();
         if (Object.keys(errs).length > 0) {
             setErrors(errs);
+            Haptics.errorBuzz();
+            setIsShaking(true);
+            setTimeout(() => setIsShaking(false), 400);
             return;
         }
         setErrors({});
@@ -168,7 +172,10 @@ const DevoteeForm = ({ devotee, onSuccess }) => {
                 </div>
             </div>
 
-            <button type="submit" className="w-full py-4 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-2xl font-bold shadow-xl shadow-orange-100 hover:shadow-2xl transition-all flex items-center justify-center gap-2 mt-4">
+            <button 
+                type="submit" 
+                className={`w-full py-4 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-2xl font-bold shadow-xl shadow-orange-100 hover:shadow-2xl transition-all flex items-center justify-center gap-2 mt-4 ${isShaking ? 'animate-shake' : ''}`}
+            >
                 {devotee ? <Save size={20} /> : <UserPlus size={20} />}
                 {devotee ? t.update_records : t.register_devotee}
             </button>

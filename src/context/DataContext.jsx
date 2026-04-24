@@ -16,6 +16,7 @@ export const DataProvider = ({ children }) => {
     const [expenses, setExpenses] = useState([]);
     const [expenseCategories, setExpenseCategories] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [cloudStatus, setCloudStatus] = useState('connecting');
 
     const [privacyMode, setPrivacyMode] = useState(() => {
         return localStorage.getItem('temple_crm_privacy') === 'true';
@@ -43,14 +44,17 @@ export const DataProvider = ({ children }) => {
 
     const fetchAllData = async () => {
         setIsLoading(true);
+        setCloudStatus('connecting');
         try {
             await Promise.all([
                 fetchDevotees(),
                 fetchExpenses(),
                 fetchCategories()
             ]);
+            setCloudStatus('online');
         } catch (error) {
             console.error('Error fetching data:', error);
+            setCloudStatus('offline');
             toast.error('Failed to sync with cloud database');
         } finally {
             setIsLoading(false);
@@ -141,9 +145,11 @@ export const DataProvider = ({ children }) => {
             .single();
 
         if (error) {
+            setCloudStatus('offline');
             toast.error('Failed to add devotee to cloud');
             return;
         }
+        setCloudStatus('online');
         setDevoteeData(prev => [{ ...data, events: [] }, ...prev]);
         notifyIsland('Devotee Added', 'success');
     };
@@ -257,8 +263,10 @@ export const DataProvider = ({ children }) => {
     };
 
     const purgeData = async () => {
-        // Use RPC or individual deletes (restricted by RLS)
+        // Use individual deletes (restricted by RLS)
+        // Explicitly clear collections to avoid orphaned records if cascade is not set
         await Promise.all([
+            supabase.from('collections').delete().neq('id', '0'),
             supabase.from('devotees').delete().neq('id', '0'),
             supabase.from('expenses').delete().neq('id', '0')
         ]);
@@ -860,13 +868,54 @@ export const DataProvider = ({ children }) => {
         });
     };
 
-    const importFromExcel = (fileBuffer) => {
+    const importFromExcel = async (fileBuffer) => {
         try {
             const records = parseExcelFile(fileBuffer);
             if (records.length === 0) throw new Error('No valid rows found. Check your column headers.');
             
-            // Note: Currently appends. We could add a 'Merge' option later.
-            setDevoteeData(prev => [...records, ...prev]);
+            // 1. Prepare data for Supabase
+            // Map keys to snake_case for the database
+            const devoteesToInsert = records.map(r => ({
+                id: r.id,
+                name: r.name,
+                phone: r.phone,
+                address: r.address,
+                total_expected: r.totalExpected,
+                total_paid: r.totalPaid,
+                total_pending: r.totalPending,
+                status: r.status
+            }));
+
+            const collectionsToInsert = [];
+            records.forEach(r => {
+                if (r.events && r.events.length > 0) {
+                    r.events.forEach(e => {
+                        collectionsToInsert.push({
+                            id: e.id,
+                            devotee_id: r.id,
+                            date: e.date,
+                            year: e.year,
+                            type: e.type,
+                            book: e.book,
+                            leaf: e.leaf,
+                            paid: e.paid,
+                            unpaid: e.unpaid,
+                            remark: e.remark,
+                            description: e.description
+                        });
+                    });
+                }
+            });
+
+            // 2. Insert into Supabase
+            await supabase.from('devotees').insert(devoteesToInsert);
+            if (collectionsToInsert.length > 0) {
+                await supabase.from('collections').insert(collectionsToInsert);
+            }
+            
+            // 3. Refresh local state
+            await fetchAllData();
+            
             return { success: true, count: records.length };
         } catch (err) {
             if (import.meta.env.DEV) console.error('Import Error:', err);
@@ -889,7 +938,8 @@ export const DataProvider = ({ children }) => {
             expenseCategories, addExpenseCategory, deleteExpenseCategory,
             maskValue, isLoading, migrateLocalToCloud,
             debugMode, toggleDebugMode,
-            islandTip, notifyIsland
+            islandTip, notifyIsland,
+            cloudStatus
         }}>
             {children}
         </DataContext.Provider>

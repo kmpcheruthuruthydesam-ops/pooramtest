@@ -106,7 +106,7 @@ const Login = () => {
                                 <div className="relative w-24 h-24 bg-white rounded-full p-1 shadow-2xl ring-4 ring-white/50 overflow-hidden">
                                     <img 
                                         src={divineLogo} 
-                                        alt="Divine Logo" 
+                                        alt="Committee Logo" 
                                         className="w-full h-full object-cover rounded-full" 
                                     />
                                 </div>
@@ -120,7 +120,7 @@ const Login = () => {
                             </p>
                             <div className="flex items-center gap-2 px-3 py-1 bg-slate-900/5 rounded-full">
                                 <ShieldCheck size={12} className="text-orange-500" />
-                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Divine Management Portal</span>
+                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Committee Management Portal</span>
                             </div>
                         </header>
 

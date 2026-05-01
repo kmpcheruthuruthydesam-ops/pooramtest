@@ -85,10 +85,11 @@ const Profile = () => {
     const confirmDeleteEvent = () => {
         if (!deletingEvent) return;
         const paidRefund = Number(deletingEvent.paid) || 0;
+        const newTotalPaid = Math.max(0, (Number(devotee.totalPaid) || 0) - paidRefund);
         const updated = {
             ...devotee,
-            totalPaid: Math.max(0, (Number(devotee.totalPaid) || 0) - paidRefund),
-            totalPending: (Number(devotee.totalPending) || 0) + paidRefund,
+            totalPaid: newTotalPaid,
+            totalPending: Math.max(0, (Number(devotee.totalExpected) || 0) - newTotalPaid),
             events: devotee.events.filter(e => e.id !== deletingEvent.id)
         };
         updated.status = updated.totalPending <= 0 ? 'Paid' : 'Pending';

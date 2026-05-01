@@ -101,7 +101,7 @@ const UserManual = () => {
 
             {/* Print Only Header */}
             <div className="hidden print:block text-center border-b-2 border-slate-100 pb-8 mb-8">
-                <h1 className="text-4xl font-black text-slate-900 mb-2">Temple CRM User Manual</h1>
+                <h1 className="text-4xl font-black text-slate-900 mb-2">Committee CRM User Manual</h1>
                 <p className="text-slate-500 font-bold">Kozhimamparamb Pooram Cheruthuruthy Desam</p>
                 <div className="mt-4 text-[10px] uppercase tracking-widest text-slate-400 font-black">Official Documentation</div>
             </div>
@@ -220,7 +220,7 @@ const UserManual = () => {
             {/* Footer */}
             <footer className="text-center pt-8 border-t border-slate-100">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
-                    Temple CRM © 2024 • Kozhimamparamb Pooram
+                    Committee CRM © 2024 • Kozhimamparamb Pooram
                 </p>
             </footer>
         </div>

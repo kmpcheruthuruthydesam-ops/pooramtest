@@ -70,13 +70,13 @@ const Sidebar = memo(({ isOpen, setIsOpen, isInstallable, onInstall }) => {
                     <div className="w-14 h-14 bg-white rounded-[22px] flex items-center justify-center shadow-[0_15px_35px_-10px_rgba(0,0,0,0.1)] group-hover:shadow-[0_20px_45px_-10px_rgba(234,88,12,0.15)] group-hover:scale-105 group-hover:-rotate-3 transition-all duration-500 relative overflow-hidden border-2 border-white ring-2 ring-orange-500/5 hover:ring-orange-500/20">
                         <img 
                             src={divineLogo} 
-                            alt="Divine Logo" 
+                            alt="Committee Logo" 
                             className="w-full h-full object-cover scale-110 group-hover:scale-100 transition-transform duration-700" 
                         />
                         <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/10 to-transparent"></div>
                     </div>
                     <div>
-                        <h2 className="text-2xl font-[900] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-600 bg-clip-text text-transparent tracking-tighter leading-none mb-1.5 uppercase">Crm</h2>
+                        <h2 className="text-2xl font-[900] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-600 bg-clip-text text-transparent tracking-tighter leading-none mb-1.5 uppercase">CRM</h2>
                         <div className="flex items-center gap-2">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] opacity-80">{t.divine_portal}</p>
                         </div>

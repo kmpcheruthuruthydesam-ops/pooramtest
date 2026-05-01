@@ -10,19 +10,11 @@ import Modal from '../components/Modal';
 const getCategoryStyle = (cat) => CATEGORY_STYLES[cat] || 'bg-slate-100 text-slate-500';
 
 const CATEGORY_STYLES = {
-    'Maintenance': 'bg-blue-50 text-blue-600',
-    'Electricity': 'bg-amber-50 text-amber-600',
-    'Salary': 'bg-emerald-50 text-emerald-600',
-    'Pooja Items': 'bg-violet-50 text-violet-600',
-    'Other': 'bg-slate-100 text-slate-500',
+    'General': 'bg-slate-50 text-slate-600',
 };
 
 const CATEGORY_BAR = {
-    'Maintenance': 'bg-blue-400',
-    'Electricity': 'bg-amber-400',
-    'Salary': 'bg-emerald-500',
-    'Pooja Items': 'bg-violet-400',
-    'Other': 'bg-slate-400',
+    'General': 'bg-slate-400',
 };
 
 const SortHeader = ({ label, field, sort, onSort, className = '' }) => (
@@ -79,7 +71,7 @@ const Expenses = () => {
     const [formData, setFormData] = useState({ 
         date: new Date().toISOString().split('T')[0], 
         name: '',
-        category: 'Maintenance', 
+        category: 'General', 
         amount: ''
     });
 
@@ -102,7 +94,7 @@ const Expenses = () => {
     const categoryTotals = useMemo(() => {
         const map = {};
         (expenses || []).forEach(e => {
-            const cat = e.category || 'Other';
+            const cat = e.category || 'General';
             map[cat] = (map[cat] || 0) + (Number(e.amount) || 0);
         });
         const total = Object.values(map).reduce((s, v) => s + v, 0) || 1;
@@ -170,7 +162,7 @@ const Expenses = () => {
         setFormData({ 
             date: new Date().toISOString().split('T')[0], 
             name: '',
-            category: expenseCategories[0] || 'Other', 
+            category: expenseCategories[0] || 'General', 
             amount: ''
         });
     };
@@ -473,7 +465,7 @@ const Expenses = () => {
                                 className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500/50 outline-none transition-all font-bold text-slate-900 placeholder:text-slate-400"
                                 value={formData.name} 
                                 onChange={e => setFormData({...formData, name: e.target.value})}
-                                placeholder="e.g. Electricity Board"
+                                placeholder="e.g. Hardware Store"
                             />
                         </div>
                     </div>

@@ -196,7 +196,12 @@ export const DataProvider = ({ children }) => {
     };
 
     const updateDevotee = async (updated) => {
-        // 1. Update main record
+        // 1. Recalculate totals from events for consistency
+        const sanitizedEvents = updated.events || [];
+        const derivedPaid = sanitizedEvents.reduce((sum, e) => sum + (Number(e.paid) || 0), 0);
+        const derivedPending = Math.max(0, (Number(updated.totalExpected) || 0) - derivedPaid);
+        const derivedStatus = derivedPending <= 0 ? 'Paid' : 'Pending';
+
         const { error } = await supabase
             .from('devotees')
             .update({
@@ -204,9 +209,9 @@ export const DataProvider = ({ children }) => {
                 phone: updated.phone,
                 address: updated.address,
                 total_expected: updated.totalExpected,
-                total_paid: updated.totalPaid,
-                total_pending: updated.totalPending,
-                status: updated.status
+                total_paid: derivedPaid,
+                total_pending: derivedPending,
+                status: derivedStatus
             })
             .eq('id', updated.id);
 
@@ -216,12 +221,10 @@ export const DataProvider = ({ children }) => {
         }
 
         // 2. Sync events (collections)
-        // We need to upsert changed ones AND delete removed ones
         const currentDevotee = devoteeData.find(d => d.id === updated.id);
         const currentEventIds = (currentDevotee?.events || []).map(e => e.id);
         const updatedEventIds = (updated.events || []).map(e => e.id);
         
-        // Find IDs that were removed
         const deletedIds = currentEventIds.filter(id => !updatedEventIds.includes(id));
         if (deletedIds.length > 0) {
             await supabase.from('collections').delete().in('id', deletedIds);
@@ -246,7 +249,12 @@ export const DataProvider = ({ children }) => {
             await supabase.from('collections').upsert(eventsToSync);
         }
 
-        setDevoteeData(prev => prev.map(d => d.id === updated.id ? updated : d));
+        setDevoteeData(prev => prev.map(d => d.id === updated.id ? {
+            ...updated,
+            totalPaid: derivedPaid,
+            totalPending: derivedPending,
+            status: derivedStatus
+        } : d));
     };
 
     const deleteDevotee = async (id) => {
@@ -294,18 +302,12 @@ export const DataProvider = ({ children }) => {
     };
 
     const deleteExpenseCategory = async (name) => {
-        if (['Maintenance', 'Electricity', 'Salary', 'Pooja Items', 'Other'].includes(name)) {
-            toast.error(t.standard_cat_error || "Standard categories cannot be deleted");
-            return;
-        }
         const { error } = await supabase.from('expense_categories').delete().eq('name', name);
         if (error) return;
         setExpenseCategories(prev => prev.filter(c => c !== name));
     };
 
     const purgeData = async () => {
-        // Use individual deletes (restricted by RLS)
-        // Explicitly clear collections to avoid orphaned records if cascade is not set
         await Promise.all([
             supabase.from('collections').delete().neq('id', '0'),
             supabase.from('devotees').delete().neq('id', '0'),
@@ -332,7 +334,6 @@ export const DataProvider = ({ children }) => {
             return;
         }
 
-        // Sheet 1 — Devotees
         const devoteeRows = devoteeData.map((d, i) => ({
             'S.No':           i + 1,
             'ID':             d.id || '',
@@ -345,7 +346,6 @@ export const DataProvider = ({ children }) => {
             'Status':         d.status || '',
         }));
 
-        // Sheet 2 — Collections (all events)
         const collectionRows = devoteeData.flatMap(d =>
             (d.events || []).map(e => ({
                 'Date':          e.date || '',
@@ -483,14 +483,12 @@ export const DataProvider = ({ children }) => {
         document.body.removeChild(link);
     };
 
-    // Issue 9: removed window.location.reload()
-    // Issue 8: replaced alert() with toast()
     const seedMockData = async () => {
         setIsLoading(true);
         const firstNames = ['Arjun', 'Mohan', 'Gopi', 'Sree', 'Vishnu', 'Rahul', 'Adithi', 'Meera', 'Anandu', 'Pranav', 'Harish', 'Karthik', 'Sujith', 'Deepak', 'Aswin', 'Lakshmi', 'Parvathi', 'Anjali', 'Kavya', 'Deepa', 'Santhosh', 'Ramesh', 'Vineeth', 'Abhijith'];
         const lastNames = ['Nair', 'Das', 'Kumar', 'Menon', 'Pillai', 'Varier', 'Ayyar', 'Sharma', 'Verma', 'Singh', 'Reddy', 'Rao', 'Nambiar', 'Kurup', 'Panicker'];
         const addresses = ['House No. 683, Near Temple', 'Near Mahadeva Temple, Kottayam', 'Temple view Villa, Kochi', 'Santhi Nagar, Thiruvananthapuram', 'Kalpathy, Palakkad', 'Aluva East', 'Muvattupuzha', 'Vaikom', 'Guruvayur Shore'];
-        const categories = ['Maintenance', 'Electricity', 'Salary', 'Pooja Items', 'Other'];
+        const categories = [];
 
         const getSeededValue = (seed, mod) => {
             let h = 0;
@@ -551,7 +549,7 @@ export const DataProvider = ({ children }) => {
 
         const mockExpenses = [];
         for (let k = 1; k <= 20; k++) {
-            const cat = categories[getSeededValue('exp' + k, categories.length)];
+            const cat = categories.length > 0 ? categories[getSeededValue('exp' + k, categories.length)] : 'General';
             mockExpenses.push({
                 id: `EXP-${String(k).padStart(4, '0')}`,
                 date: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(1 + getSeededValue('ed' + k, 28)).padStart(2, '0')}`,
@@ -564,7 +562,6 @@ export const DataProvider = ({ children }) => {
         }
 
         try {
-            // Bulk insert to Supabase
             await supabase.from('devotees').insert(devotees);
             await supabase.from('collections').insert(collections);
             await supabase.from('expenses').insert(mockExpenses);
@@ -769,8 +766,6 @@ export const DataProvider = ({ children }) => {
         toast.success(t.backup_success);
     };
 
-    // Issue 9: removed window.location.reload()
-    // Issue 8: replaced alert() with toast()
     const importBackup = (jsonData) => {
         try {
             const data = JSON.parse(jsonData);
@@ -788,40 +783,25 @@ export const DataProvider = ({ children }) => {
 
         const formatDate = (val) => {
             if (!val) return new Date().toISOString().split('T')[0];
-            
-            // If it's a JS Date object
-            if (val instanceof Date) {
-                return val.toISOString().split('T')[0];
-            }
-            
-            // If it's a number (Excel serial date)
+            if (val instanceof Date) return val.toISOString().split('T')[0];
             if (typeof val === 'number') {
-                // Excel dates are days since 1900-01-01
                 const date = new Date(Math.round((val - 25569) * 86400 * 1000));
                 return date.toISOString().split('T')[0];
             }
-
             const str = String(val).trim();
             if (!str) return new Date().toISOString().split('T')[0];
-
-            // If already YYYY-MM-DD
             if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str;
-
-            // Try parsing
             const d = new Date(str);
             if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
-
             return new Date().toISOString().split('T')[0];
         };
         
-        // 1. Find and Parse Devotees Sheet
         const devoteeSheetName = workbook.SheetNames.find(n => 
             ['devotees', 'members', 'devotee', 'data'].includes(n.toLowerCase())
         ) || workbook.SheetNames[0];
         const devoteeSheet = workbook.Sheets[devoteeSheetName];
         const devoteeRows = XLSX.utils.sheet_to_json(devoteeSheet, { defval: '' });
 
-        // 2. Find and Parse Collections Sheet
         const collectionSheetName = workbook.SheetNames.find(n => 
             ['collections', 'payments', 'events', 'receipts'].includes(n.toLowerCase())
         ) || workbook.SheetNames[1];
@@ -868,62 +848,26 @@ export const DataProvider = ({ children }) => {
             return '';
         };
 
-        // Create a temporary ID mapping to handle potential conflicts or new generations
-        const idMap = new Map(); // Old ID -> New ID
-
-        // Step: Map existing devotees for duplicate detection
-        const existingPhones = new Map(); // Normalized Phone -> ID
-        const existingNames = new Map();  // Normalized Name|Address -> ID
-
-        devoteeData.forEach(d => {
-            if (d.phone) {
-                const norm = d.phone.replace(/\D/g, '').slice(-10);
-                if (norm.length === 10) existingPhones.set(norm, d.id);
-            }
-            const nameKey = `${normalize(d.name)}|${normalize(d.address || '')}`;
-            existingNames.set(nameKey, d.id);
-        });
-
         let nextIdNum = devoteeData.length > 0
             ? Math.max(...devoteeData.map(d => parseInt((d.id || '0').replace(/\D/g, '')) || 0)) + 1
             : 1001;
 
-        // Process Devotees - Use a Map to de-duplicate by ID or Name
         const devoteeMap = new Map();
         
         devoteeRows.forEach(row => {
             const name = String(findCol(row, FIELD_MAP.name) || '').trim();
             if (!name) return;
-
             const oldId = String(findCol(row, FIELD_MAP.id) || '').trim();
             const phone = String(findCol(row, FIELD_MAP.phone) || '').trim();
             const address = String(findCol(row, FIELD_MAP.address) || '').trim();
             
-            // Step: Detect existing devotee to prevent duplicates
             let existingId = null;
-            if (oldId) {
-                // If the excel has an ID, we prioritize checking if that ID exists
-                if (devoteeData.some(d => d.id === oldId)) existingId = oldId;
-            }
+            if (oldId && devoteeData.some(d => d.id === oldId)) existingId = oldId;
             
-            if (!existingId && phone) {
-                const normPh = phone.replace(/\D/g, '').slice(-10);
-                if (normPh.length === 10) existingId = existingPhones.get(normPh);
-            }
-            
-            if (!existingId) {
-                const nameKey = `${normalize(name)}|${normalize(address)}`;
-                existingId = existingNames.get(nameKey);
-            }
-
-            const lookupKey = oldId ? oldId.toUpperCase() : (existingId || name.toLowerCase());
+            const lookupKey = oldId ? oldId.toUpperCase() : name.toLowerCase();
 
             if (!devoteeMap.has(lookupKey)) {
                 const newId = existingId || oldId || `DEV-${nextIdNum++}`;
-                if (oldId) idMap.set(oldId.toUpperCase(), newId);
-
-                const phone = String(findCol(row, FIELD_MAP.phone) || '').trim();
-                const address = String(findCol(row, FIELD_MAP.address) || '').trim();
                 const totalExpected = Number(findCol(row, FIELD_MAP.totalExpected)) || 0;
                 const totalPaidFromSheet = Number(findCol(row, FIELD_MAP.totalPaid)) || 0;
                 const totalPendingFromSheet = Number(findCol(row, FIELD_MAP.totalPending)) || Math.max(0, totalExpected - totalPaidFromSheet);
@@ -932,7 +876,7 @@ export const DataProvider = ({ children }) => {
 
                 devoteeMap.set(lookupKey, {
                     id: newId,
-                    oldId: oldId, // Keep for linking events
+                    oldId: oldId,
                     name, phone, address,
                     totalExpected,
                     totalPaid: totalPaidFromSheet,
@@ -945,20 +889,17 @@ export const DataProvider = ({ children }) => {
 
         const records = Array.from(devoteeMap.values());
 
-        // Process and Link Events
         collectionRows.forEach(row => {
             const devId = String(findCol(row, EVENT_FIELD_MAP.devoteeId) || '').trim().toUpperCase();
             const devName = String(findCol(row, FIELD_MAP.name) || '').trim();
             if (!devId && !devName) return;
 
-            // Find matching devotee by ID (oldId or newId) or Name
             let devotee = records.find(r => 
                 (devId && r.oldId && r.oldId.toUpperCase() === devId) || 
                 (devId && r.id && r.id.toUpperCase() === devId) ||
                 (devName && r.name.toLowerCase() === devName.toLowerCase())
             );
             
-            // If devotee not found in devotee list but exists in collections, create a placeholder
             if (!devotee) {
                 const newId = devId || `DEV-${nextIdNum++}`;
                 devotee = {
@@ -970,13 +911,10 @@ export const DataProvider = ({ children }) => {
                     events: []
                 };
                 records.push(devotee);
-                if (devId) idMap.set(devId, newId);
             }
 
             const paid = Number(findCol(row, EVENT_FIELD_MAP.paid)) || 0;
             const rawType = String(findCol(row, EVENT_FIELD_MAP.type) || '').trim();
-            
-            // Normalize type to standard values used in UI
             let type = 'General';
             if (/pooram/i.test(rawType)) type = 'Pooram';
             else if (/ayyappan|vilakku/i.test(rawType)) type = 'Ayyappan Vilakku';
@@ -997,17 +935,14 @@ export const DataProvider = ({ children }) => {
                 description: `${type} collection (${findCol(row, EVENT_FIELD_MAP.year) || new Date().getFullYear()})`
             };
 
-            // Prevent duplicate events within the same import or existing state
             if (!devotee.events.some(e => e.id === event.id)) {
                 devotee.events.push(event);
             }
         });
 
-        // Clean up: ensure totals are consistent if events were imported
         return records.map(r => {
             const { oldId, ...rest } = r;
             if (r.events.length > 0) {
-                // If we imported events, calculate totals from them
                 const calcPaid = r.events.reduce((sum, e) => sum + (Number(e.paid) || 0), 0);
                 rest.totalPaid = Math.max(rest.totalPaid, calcPaid);
                 rest.totalPending = Math.max(0, rest.totalExpected - rest.totalPaid);

@@ -86,7 +86,7 @@ const ResetPassword = () => {
                 <div className="bg-white/80 backdrop-blur-3xl p-8 md:p-14 rounded-[32px] md:rounded-[40px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] border border-white/60 space-y-8 md:space-y-10 relative overflow-hidden">
                     <header className="flex flex-col items-center text-center">
                         <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-[24px] md:rounded-[32px] flex items-center justify-center shadow-2xl shadow-orange-500/20 mb-6 md:mb-8 border-4 border-white rotate-3">
-                            <img src={divineLogo} alt="Logo" className="w-full h-full object-cover scale-110" />
+                            <img src={divineLogo} alt="Committee Logo" className="w-full h-full object-cover scale-110" />
                         </div>
                         <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none uppercase">
                             Set New Password

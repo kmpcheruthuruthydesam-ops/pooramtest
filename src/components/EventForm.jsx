@@ -29,7 +29,12 @@ const EventForm = ({ devoteeId, initialType = 'Pooram', onSuccess, existingEvent
         setPaid(val);
         setErrors(p => ({ ...p, paid: '' }));
         const paidNum = parseFloat(val) || 0;
-        const pendingBalance = Math.max(0, (Number(devotee?.totalPending) || 0) - paidNum);
+        
+        // Fix: calculate current pending by adding back the current receipt's paid amount if editing
+        const currentReceiptPaid = existingEvent ? (Number(existingEvent.paid) || 0) : 0;
+        const basePending = (Number(devotee?.totalPending) || 0) + currentReceiptPaid;
+        const pendingBalance = Math.max(0, basePending - paidNum);
+        
         setUnpaid(String(pendingBalance));
     };
 

@@ -70,9 +70,5 @@ CREATE POLICY "Allow authenticated users full access on expense_categories" ON e
 
 -- 8. Seed default categories
 INSERT INTO expense_categories (name) VALUES 
-('Maintenance'), 
-('Electricity'), 
-('Salary'), 
-('Pooja Items'), 
-('Other')
+('General')
 ON CONFLICT (name) DO NOTHING;

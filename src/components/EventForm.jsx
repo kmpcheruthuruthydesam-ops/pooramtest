@@ -96,7 +96,7 @@ const EventForm = ({ devoteeId, initialType = 'Pooram', onSuccess, existingEvent
         `w-full bg-slate-50 border rounded-2xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 outline-none transition-all font-bold text-slate-900 ${errors[f] ? 'border-rose-400 bg-rose-50/30' : 'border-slate-100'}`;
 
     const years = [];
-    for (let y = parseInt(CURRENT_YEAR); y >= parseInt(CURRENT_YEAR) - 5; y--) years.push(String(y));
+    for (let y = 2030; y >= parseInt(CURRENT_YEAR) - 5; y--) years.push(String(y));
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6" noValidate>

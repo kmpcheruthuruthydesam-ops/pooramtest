@@ -7,7 +7,7 @@ import MetricCard from '../components/MetricCard';
 import { Haptics } from '../lib/haptics';
 
 const Collections = () => {
-    const { devoteeData, exportCollectionsToCSV, maskValue, debugMode } = useData() || {};
+    const { devoteeData, exportCollectionsToCSV, maskValue, debugMode, isLoading } = useData() || {};
     const { t } = useLanguage();
     const [searchTerm, setSearchTerm] = useState('');
     const [timeFilter, setTimeFilter] = useState('all');
@@ -217,7 +217,20 @@ const Collections = () => {
             <div className="glass-card overflow-hidden">
                 {/* ═══ MOBILE CARD VIEW (iOS Style) ═══ */}
                 <div className="md:hidden">
-                    {currentRows.length > 0 ? (
+                    {isLoading ? (
+                        <div className="divide-y divide-slate-200/40">
+                             {Array.from({ length: 5 }).map((_, i) => (
+                                <div key={`mob-skeleton-${i}`} className="flex items-center gap-3.5 px-5 py-3.5 animate-pulse">
+                                    <div className="w-10 h-10 rounded-full bg-slate-100 shrink-0"></div>
+                                    <div className="flex-1">
+                                        <div className="h-4 w-32 bg-slate-100 rounded mb-2"></div>
+                                        <div className="h-3 w-20 bg-slate-50 rounded"></div>
+                                    </div>
+                                    <div className="h-4 w-12 bg-slate-100 rounded"></div>
+                                </div>
+                             ))}
+                        </div>
+                    ) : currentRows.length > 0 ? (
                         <div className="divide-y divide-slate-200/40">
                             {currentRows.map((item, idx) => (
                                 <div 
@@ -277,7 +290,19 @@ const Collections = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/20">
-                                {currentRows.map((item, idx) => (
+                            {isLoading ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <tr key={`skeleton-${i}`} className="animate-pulse">
+                                        <td className="px-8 py-5"><div className="h-4 w-20 bg-slate-100 rounded"></div></td>
+                                        <td className="px-8 py-5"><div className="h-6 w-24 bg-slate-100 rounded"></div></td>
+                                        <td className="px-8 py-5"><div className="h-8 w-40 bg-slate-100 rounded"></div></td>
+                                        <td className="px-8 py-5"><div className="h-6 w-32 bg-slate-50 rounded-full"></div></td>
+                                        <td className="px-8 py-5 text-right"><div className="h-6 w-16 bg-slate-100 rounded ml-auto"></div></td>
+                                        <td className="px-8 py-5 text-right"><div className="h-10 w-10 bg-slate-100 rounded-2xl ml-auto"></div></td>
+                                    </tr>
+                                ))
+                            ) : currentRows.length > 0 ? (
+                                currentRows.map((item, idx) => (
                                     <tr
                                         key={item.id ? `col-${item.id}-${idx}` : `col-fallback-${idx}`}
                                         className="hover:bg-white/40 transition-colors group"
@@ -324,7 +349,8 @@ const Collections = () => {
                                             </button>
                                         </td>
                                     </tr>
-                                ))}
+                                ))
+                            ) : null}
                             {filteredEvents.length === 0 && (
                                 <tr>
                                     <td colSpan="6" className="px-8 py-20 text-center">

@@ -251,8 +251,8 @@ const Dashboard = () => {
                 </motion.div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 glass-card p-8 dashboard-chart">
+            <div className="grid grid-cols-1 gap-8">
+                <div className="glass-card p-8 dashboard-chart">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                         <div>
                             <h3 className="text-xl font-bold text-slate-800 flex items-center gap-3">
@@ -287,23 +287,6 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                <div className="glass-card p-8 dashboard-chart">
-                    <div className="text-center mb-8">
-                        <h3 className="text-xl font-bold text-slate-800 flex items-center justify-center gap-3">
-                            <PieIcon className="text-emerald-500" /> {t.status_distribution}
-                        </h3>
-                        <p className="text-sm text-slate-400 font-medium">{t.fulfillment_ratio}</p>
-                    </div>
-                    <div className="h-[250px] relative">
-                        <Doughnut data={doughnutData} options={{ maintainAspectRatio: false, cutout: '75%' }} />
-                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <p className="text-3xl font-black text-slate-800">
-                                {Math.min(100, Math.round((Number(stats.totalPaid) / (Number(stats.totalExpected) || 1)) * 100))}%
-                            </p>
-                            <p className="text-[10px] uppercase font-bold text-slate-400 tracking-tighter">{t.collection_rate}</p>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

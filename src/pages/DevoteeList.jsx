@@ -109,8 +109,86 @@ const MobileDevoteeCard = memo(({ devotee, t, deleteDevotee }) => {
     );
 });
 
+const DevoteeTableRow = memo(({ devotee, t, onEdit, onDelete }) => {
+    const navigate = useNavigate();
+    return (
+        <motion.tr
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="hover:bg-white/40 transition-colors group cursor-pointer"
+            onClick={() => navigate(`/profile/${devotee.id}`)}
+        >
+            <td className="px-8 py-5">
+                <span className="text-[10px] font-black text-slate-400 tabular-nums tracking-tighter bg-slate-50 px-2 py-1 rounded-lg border border-slate-100 group-hover:bg-white transition-colors">#{devotee.id}</span>
+            </td>
+            <td className="px-8 py-5">
+                <div 
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex flex-col"
+                >
+                    <Link to={`/profile/${devotee.id}`} className="text-[14px] font-black text-slate-900 group-hover:text-orange-600 transition-colors">{devotee.name}</Link>
+                    <span className="text-[11px] font-bold text-slate-400 tabular-nums">{devotee.phone}</span>
+                </div>
+            </td>
+            <td className="px-8 py-5 hidden lg:table-cell max-w-[220px] truncate" title={devotee.address}>
+                <span className="text-[12px] font-bold text-slate-500/80 tracking-tight italic leading-relaxed">{devotee.address || '—'}</span>
+            </td>
+            <td className="px-8 py-5 text-right font-mono tabular-nums">
+                <span className="text-[14px] font-black text-slate-700">₹{(Number(devotee.totalExpected) || 0).toLocaleString()}</span>
+            </td>
+            <td className="px-8 py-5 text-right font-mono tabular-nums">
+                <span className="text-[14px] font-black text-emerald-600/90 tracking-tight">₹{(Number(devotee.totalPaid) || 0).toLocaleString()}</span>
+            </td>
+            <td className="px-8 py-5 text-right font-mono tabular-nums">
+                <span className={`text-[14px] font-black tracking-tight ${Number(devotee.totalPending) > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                    ₹{(Number(devotee.totalPending) || 0).toLocaleString()}
+                </span>
+            </td>
+            <td className="px-8 py-5 text-center">
+                {devotee.isNirapara ? (
+                    <div className="flex items-center justify-center">
+                        <span className="flex items-center gap-1.5 px-3 py-1 bg-orange-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider shadow-sm shadow-orange-100">
+                            <Check size={12} strokeWidth={4} />
+                            Yes
+                        </span>
+                    </div>
+                ) : (
+                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No</span>
+                )}
+            </td>
+            <td className="px-8 py-5 text-center">
+                <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] shadow-sm ${devotee.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-orange-50 text-orange-700 border border-orange-100'}`}>
+                    {devotee.status === 'Paid' ? t.paid : t.pending}
+                </span>
+            </td>
+            <td className="px-8 py-5 text-right">
+                <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Link to={`/profile/${devotee.id}`} className="p-2 text-slate-300 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-all" title="View profile">
+                        <ArrowRight size={16} />
+                    </Link>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); e.preventDefault(); onEdit(devotee); }}
+                        className="p-2 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                        title="Edit devotee"
+                    >
+                        <Edit2 size={16} />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); e.preventDefault(); onDelete(devotee); }}
+                        className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                        title="Delete devotee"
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+            </td>
+        </motion.tr>
+    );
+});
+
 const DevoteeList = () => {
-    const { devoteeData = [], deleteDevotee, exportToCSV, seedMockData, importFromExcel, maskValue, debugMode } = useData() || {};
+    const { devoteeData = [], deleteDevotee, exportToCSV, seedMockData, importFromExcel, maskValue, debugMode, isLoading } = useData() || {};
     const excelInputRef = useRef(null);
     const { t } = useLanguage();
     const { userRole } = useAuth();
@@ -129,7 +207,7 @@ const DevoteeList = () => {
     const [isSticky, setIsSticky] = useState(false);
 
     // Fix 4: sort state
-    const [sort, setSort] = useState({ field: null, dir: 'asc' });
+    const [sort, setSort] = useState({ field: 'id', dir: 'asc' });
 
     // Performance Fix: Debounce heavy search filter array operations
     useEffect(() => {
@@ -194,6 +272,14 @@ const DevoteeList = () => {
         if (sort.field) {
             data = [...data].sort((a, b) => {
                 let av = a[sort.field], bv = b[sort.field];
+                
+                // Special handling for IDs to sort numerically (DEV-1001, DEV-1002...)
+                if (sort.field === 'id' || (typeof av === 'string' && /\d+/.test(av))) {
+                    const aNum = parseInt(String(av || '').match(/\d+/)?.[0] || '0');
+                    const bNum = parseInt(String(bv || '').match(/\d+/)?.[0] || '0');
+                    if (aNum !== bNum) return sort.dir === 'asc' ? aNum - bNum : bNum - aNum;
+                }
+
                 if (typeof av === 'number') return sort.dir === 'asc' ? av - bv : bv - av;
                 return sort.dir === 'asc'
                     ? String(av || '').localeCompare(String(bv || ''))
@@ -300,102 +386,51 @@ const DevoteeList = () => {
                     <table className="w-full text-left border-collapse">
                          <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-100">
-                                <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.15em]">{t.id_label}</th>
+                                <SortHeader label={t.id_label} field="id" sort={sort} onSort={handleSort} />
                                 <SortHeader label={t.name}         field="name"         sort={sort} onSort={handleSort} />
                                 <SortHeader label={t.address}      field="address"      sort={sort} onSort={handleSort} className="hidden lg:table-cell" />
                                 <SortHeader label={t.expected_amt} field="totalExpected" sort={sort} onSort={handleSort} className="text-right" />
                                 <SortHeader label={t.paid_amt}     field="totalPaid"     sort={sort} onSort={handleSort} className="text-right" />
                                 <SortHeader label={t.pending_amt}  field="totalPending"  sort={sort} onSort={handleSort} className="text-right" />
                                 <SortHeader label={t.nirapara}     field="isNirapara"    sort={sort} onSort={handleSort} className="text-center" />
-                                <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] text-center">{t.all_status}</th>
+                                <SortHeader label={t.all_status} field="status" sort={sort} onSort={handleSort} className="text-center" />
                                 <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] text-right">{t.actions}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/20">
-                            <AnimatePresence mode="popLayout">
-                                {currentRows.map((devotee) => (
-                                    <motion.tr
-                                        initial={{ opacity: 0, x: -10 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, scale: 0.98 }}
-                                        transition={{ duration: 0.15 }}
-                                        key={devotee.id}
-                                        className="hover:bg-white/40 transition-colors group"
-                                    >
-                                        <td className="px-8 py-5 whitespace-nowrap">
-                                            <div className="flex flex-col gap-1">
-                                                <span className="font-mono text-[9px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded-md border border-slate-100 group-hover:bg-white transition-colors">#{devotee.id}</span>
-                                                {debugMode && (
-                                                    <span className="text-[8px] font-bold text-emerald-400 font-mono uppercase tracking-widest" title={devotee.id}>
-                                                        Cloud Synced
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-5 min-w-[280px]">
-                                            <Link to={`/profile/${devotee.id}`} className="flex flex-col group/name">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-[14px] font-black text-slate-900 group-hover/name:text-orange-600 transition-colors whitespace-nowrap">{devotee.name}</span>
-                                                    <span className="text-[10px] font-black text-slate-300">/</span>
-                                                    <span className="text-[11px] font-extrabold text-slate-400 tracking-tighter">{devotee.phone}</span>
-                                                </div>
-                                            </Link>
-                                        </td>
-                                        <td className="px-8 py-5 hidden lg:table-cell max-w-[220px] truncate" title={devotee.address}>
-                                            <span className="text-[12px] font-bold text-slate-500/80 tracking-tight italic leading-relaxed">{devotee.address || '—'}</span>
-                                        </td>
-                                        <td className="px-8 py-5 text-right font-mono tabular-nums">
-                                            <span className="text-[14px] font-black text-slate-700">₹{(Number(devotee.totalExpected) || 0).toLocaleString()}</span>
-                                        </td>
-                                        <td className="px-8 py-5 text-right font-mono tabular-nums">
-                                            <span className="text-[14px] font-black text-emerald-600/90 tracking-tight">₹{(Number(devotee.totalPaid) || 0).toLocaleString()}</span>
-                                        </td>
-                                        <td className="px-8 py-5 text-right font-mono tabular-nums">
-                                            <span className={`text-[14px] font-black tracking-tight ${Number(devotee.totalPending) > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
-                                                ₹{(Number(devotee.totalPending) || 0).toLocaleString()}
-                                            </span>
-                                        </td>
-                                        <td className="px-8 py-5 text-center">
-                                            {devotee.isNirapara ? (
-                                                <div className="flex items-center justify-center">
-                                                    <span className="flex items-center gap-1.5 px-3 py-1 bg-orange-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider shadow-sm shadow-orange-100">
-                                                        <Check size={12} strokeWidth={4} />
-                                                        Yes
-                                                    </span>
-                                                </div>
-                                            ) : (
-                                                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No</span>
-                                            )}
-                                        </td>
-                                        <td className="px-8 py-5 text-center">
-                                            <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] shadow-sm ${devotee.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-orange-50 text-orange-700 border border-orange-100'}`}>
-                                                {devotee.status === 'Paid' ? t.paid : t.pending}
-                                            </span>
-                                        </td>
-                                        <td className="px-8 py-5 text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <Link to={`/profile/${devotee.id}`} className="p-2 text-slate-300 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-all" title="View profile">
-                                                    <ArrowRight size={16} />
-                                                </Link>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); setEditingDevotee(devotee); }}
-                                                    className="p-2 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
-                                                    title="Edit devotee"
-                                                >
-                                                    <Edit2 size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleDeleteClick(devotee); }}
-                                                    className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
-                                                    title="Delete devotee"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </motion.tr>
-                                ))}
-                            </AnimatePresence>
+                            {isLoading ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <tr key={`skeleton-${i}`} className="animate-pulse">
+                                        <td className="px-8 py-5"><div className="h-6 w-20 bg-slate-100 rounded-lg"></div></td>
+                                        <td className="px-8 py-5"><div className="h-6 w-40 bg-slate-100 rounded-lg"></div></td>
+                                        <td className="px-8 py-5 hidden lg:table-cell"><div className="h-4 w-48 bg-slate-50 rounded-lg"></div></td>
+                                        <td className="px-8 py-5"><div className="h-6 w-16 bg-slate-50 rounded-lg ml-auto"></div></td>
+                                        <td className="px-8 py-5"><div className="h-6 w-16 bg-slate-50 rounded-lg ml-auto"></div></td>
+                                        <td className="px-8 py-5"><div className="h-6 w-16 bg-slate-50 rounded-lg ml-auto"></div></td>
+                                        <td className="px-8 py-5 text-center"><div className="h-4 w-8 bg-slate-50 rounded-lg mx-auto"></div></td>
+                                        <td className="px-8 py-5 text-center"><div className="h-6 w-16 bg-slate-50 rounded-lg mx-auto"></div></td>
+                                        <td className="px-8 py-5 text-right"><div className="h-6 w-20 bg-slate-100 rounded-lg ml-auto"></div></td>
+                                    </tr>
+                                ))
+                            ) : currentRows.length > 0 ? (
+                                <AnimatePresence mode="popLayout">
+                                    {currentRows.map((devotee) => (
+                                        <DevoteeTableRow
+                                            key={devotee.id}
+                                            devotee={devotee}
+                                            t={t}
+                                            onEdit={setEditingDevotee}
+                                            onDelete={handleDeleteClick}
+                                        />
+                                    ))}
+                                </AnimatePresence>
+                            ) : (
+                                <tr>
+                                    <td colSpan={9} className="py-20 px-8 text-center text-slate-400 font-medium">
+                                        {t.no_devotees_found || 'No records found matching your search'}
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                         {filteredData.length > 0 && (() => {
                             const totExp = filteredData.reduce((s, d) => s + (Number(d.totalExpected) || 0), 0);

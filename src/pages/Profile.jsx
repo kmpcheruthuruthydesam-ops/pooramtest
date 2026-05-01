@@ -180,7 +180,7 @@ const Profile = () => {
 
                 {/* Tracking & Journals */}
                 <div className="lg:col-span-3 space-y-8">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {[
                             { label: t.expectation, val: devotee.totalExpected, color: 'text-slate-400', valColor: 'text-slate-800', bg: 'bg-white' },
                             { label: t.collection,  val: devotee.totalPaid,     color: 'text-emerald-500', valColor: 'text-emerald-600', bg: 'bg-emerald-50/30' },
@@ -191,21 +191,6 @@ const Profile = () => {
                                 <p className={`text-2xl font-black ${stat.valColor}`}>₹{(Number(stat.val) || 0).toLocaleString()}</p>
                             </div>
                         ))}
-                        {/* D: collection rate card */}
-                        {(() => {
-                            const rate = Math.round((Number(devotee.totalPaid) / (Number(devotee.totalExpected) || 1)) * 100);
-                            const color = rate >= 80 ? 'text-emerald-600' : rate >= 50 ? 'text-amber-500' : 'text-rose-500';
-                            const bar = rate >= 80 ? 'bg-emerald-500' : rate >= 50 ? 'bg-amber-400' : 'bg-rose-500';
-                            return (
-                                <div className="glass-card p-6 border-white/60 bg-white">
-                                    <p className="text-[10px] font-black uppercase tracking-widest mb-2 text-slate-400">{t.collection_rate}</p>
-                                    <p className={`text-2xl font-black ${color}`}>{rate}%</p>
-                                    <div className="mt-3 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                        <div className={`h-full rounded-full transition-all duration-700 ${bar}`} style={{ width: `${Math.min(rate, 100)}%` }} />
-                                    </div>
-                                </div>
-                            );
-                        })()}
                     </div>
 
                     {/* Tracker 1: Pooram */}

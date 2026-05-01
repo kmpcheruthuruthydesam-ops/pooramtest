@@ -35,7 +35,7 @@ const SortHeader = ({ label, field, sort, onSort, className = '' }) => (
 const Expenses = () => {
     const { 
         expenses, addExpense, deleteExpense, updateExpense, exportExpensesToCSV,
-        expenseCategories, addExpenseCategory, deleteExpenseCategory, maskValue
+        expenseCategories, addExpenseCategory, deleteExpenseCategory, maskValue, isLoading
     } = useData() || {};
     const { t } = useLanguage();
     const { userRole } = useAuth();
@@ -262,7 +262,20 @@ const Expenses = () => {
             <div className="glass-card overflow-hidden">
                 {/* ═══ MOBILE CARD VIEW (iOS Style) ═══ */}
                 <div className="md:hidden">
-                    {currentRows.length > 0 ? (
+                    {isLoading ? (
+                        <div className="divide-y divide-slate-200/40">
+                             {Array.from({ length: 5 }).map((_, i) => (
+                                <div key={`mob-skeleton-${i}`} className="flex items-center gap-3.5 px-5 py-3.5 animate-pulse">
+                                    <div className="w-10 h-10 rounded-full bg-slate-100 shrink-0"></div>
+                                    <div className="flex-1">
+                                        <div className="h-4 w-32 bg-slate-100 rounded mb-2"></div>
+                                        <div className="h-3 w-20 bg-slate-50 rounded"></div>
+                                    </div>
+                                    <div className="h-4 w-12 bg-slate-100 rounded"></div>
+                                </div>
+                             ))}
+                        </div>
+                    ) : currentRows.length > 0 ? (
                         <div className="divide-y divide-slate-200/40">
                             {currentRows.map((expense) => (
                                 <div 
@@ -326,7 +339,19 @@ const Expenses = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/20">
-                                {currentRows.map((expense, idx) => (
+                            {isLoading ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <tr key={`skeleton-${i}`} className="animate-pulse">
+                                        <td className="px-8 py-5"><div className="h-4 w-16 bg-slate-100 rounded"></div></td>
+                                        <td className="px-8 py-5"><div className="h-4 w-20 bg-slate-100 rounded"></div></td>
+                                        <td className="px-8 py-5"><div className="h-4 w-40 bg-slate-100 rounded"></div></td>
+                                        <td className="px-8 py-5"><div className="h-6 w-24 bg-slate-50 rounded-full"></div></td>
+                                        <td className="px-8 py-5 text-right"><div className="h-6 w-16 bg-slate-100 rounded ml-auto"></div></td>
+                                        <td className="px-8 py-5 text-right"><div className="h-6 w-20 bg-slate-100 rounded ml-auto"></div></td>
+                                    </tr>
+                                ))
+                            ) : currentRows.length > 0 ? (
+                                currentRows.map((expense, idx) => (
                                     <tr 
                                         key={expense.id} 
                                         className="hover:bg-white/40 transition-colors group"
@@ -369,8 +394,8 @@ const Expenses = () => {
                                             </div>
                                         </td>
                                     </tr>
-                                ))}
-                            {filteredExpenses.length === 0 && (
+                                ))
+                            ) : (
                                 <tr>
                                     <td colSpan="6" className="px-8 py-20 text-center">
                                         <div className="max-w-xs mx-auto">

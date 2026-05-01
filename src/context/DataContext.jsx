@@ -165,7 +165,7 @@ export const DataProvider = ({ children }) => {
         if (devotee.phone) {
             const exists = devoteeData.find(d => d.phone === devotee.phone);
             if (exists) {
-                toast.error(`Devotee already exists with this phone number: ${exists.name}`);
+                toast.error(`${t.phone_exists}: ${exists.name}`);
                 return;
             }
         }
@@ -187,7 +187,7 @@ export const DataProvider = ({ children }) => {
 
         if (error) {
             setCloudStatus('offline');
-            toast.error('Failed to add devotee to cloud');
+            toast.error(t.cloud_add_error);
             return;
         }
         setCloudStatus('online');
@@ -216,7 +216,7 @@ export const DataProvider = ({ children }) => {
             .eq('id', updated.id);
 
         if (error) {
-            toast.error('Failed to update devotee in cloud');
+            toast.error(t.cloud_update_error);
             return;
         }
 
@@ -260,7 +260,7 @@ export const DataProvider = ({ children }) => {
     const deleteDevotee = async (id) => {
         const { error } = await supabase.from('devotees').delete().eq('id', id);
         if (error) {
-            toast.error('Failed to delete devotee');
+            toast.error(t.cloud_delete_error);
             return;
         }
         setDevoteeData(prev => prev.filter(d => d.id !== id));
@@ -269,7 +269,7 @@ export const DataProvider = ({ children }) => {
     const addExpense = async (expense) => {
         const { error } = await supabase.from('expenses').insert([expense]);
         if (error) {
-            toast.error('Failed to add expense');
+            toast.error(t.cloud_add_error);
             return;
         }
         setExpenses(prev => [expense, ...prev]);
@@ -279,7 +279,7 @@ export const DataProvider = ({ children }) => {
     const updateExpense = async (updated) => {
         const { error } = await supabase.from('expenses').update(updated).eq('id', updated.id);
         if (error) {
-            toast.error('Failed to update expense');
+            toast.error(t.cloud_update_error);
             return;
         }
         setExpenses(prev => prev.map(e => e.id === updated.id ? updated : e));
@@ -288,7 +288,7 @@ export const DataProvider = ({ children }) => {
     const deleteExpense = async (id) => {
         const { error } = await supabase.from('expenses').delete().eq('id', id);
         if (error) {
-            toast.error('Failed to delete expense');
+            toast.error(t.cloud_delete_error);
             return;
         }
         setExpenses(prev => prev.filter(e => e.id !== id));
@@ -321,10 +321,10 @@ export const DataProvider = ({ children }) => {
     const getNextDevoteeId = () => {
         if (!devoteeData || devoteeData.length === 0) return 'DEV-1001';
         const ids = devoteeData.map(d => {
-            const match = String(d.id)?.match(/\d+/);
+            const match = String(d.id || '').match(/\d+/);
             return match ? parseInt(match[0]) : 0;
         });
-        const maxId = Math.max(...ids);
+        const maxId = Math.max(...ids, 1000); // Ensure at least 1000
         return `DEV-${maxId + 1}`;
     };
 
@@ -485,9 +485,9 @@ export const DataProvider = ({ children }) => {
 
     const seedMockData = async () => {
         setIsLoading(true);
-        const firstNames = ['Arjun', 'Mohan', 'Gopi', 'Sree', 'Vishnu', 'Rahul', 'Adithi', 'Meera', 'Anandu', 'Pranav', 'Harish', 'Karthik', 'Sujith', 'Deepak', 'Aswin', 'Lakshmi', 'Parvathi', 'Anjali', 'Kavya', 'Deepa', 'Santhosh', 'Ramesh', 'Vineeth', 'Abhijith'];
-        const lastNames = ['Nair', 'Das', 'Kumar', 'Menon', 'Pillai', 'Varier', 'Ayyar', 'Sharma', 'Verma', 'Singh', 'Reddy', 'Rao', 'Nambiar', 'Kurup', 'Panicker'];
-        const addresses = ['House No. 683, Near Temple', 'Near Mahadeva Temple, Kottayam', 'Temple view Villa, Kochi', 'Santhi Nagar, Thiruvananthapuram', 'Kalpathy, Palakkad', 'Aluva East', 'Muvattupuzha', 'Vaikom', 'Guruvayur Shore'];
+        const firstNames = ['അർജുൻ', 'മോഹൻ', 'ഗോപി', 'ശ്രീ', 'വിഷ്ണു', 'രാഹുൽ', 'അദിതി', 'മീര', 'ആനന്ദു', 'പ്രണവ്', 'ഹരീഷ്', 'കാർത്തിക്', 'സുജിത്', 'ദീപക്', 'അശ്വിൻ', 'ലക്ഷ്മി', 'പാർവതി', 'അഞ്ജലി', 'കാവ്യ', 'ദീപ', 'സന്തോഷ്', 'രമേഷ്', 'വിനീത്', 'അഭിജിത്ത്'];
+        const lastNames = ['നായർ', 'ദാസ്', 'കുമാർ', 'മേനോൻ', 'പിള്ള', 'വാരിയർ', 'അയ്യർ', 'ശർമ്മ', 'വർമ്മ', 'സിംഗ്', 'റെഡ്ഡി', 'റാവു', 'നമ്പ്യാർ', 'കുറുപ്പ്', 'പണിക്കർ'];
+        const addresses = ['വീട് നമ്പർ 683, ക്ഷേത്രത്തിന് സമീപം', 'മഹാദേവ ക്ഷേത്രത്തിന് സമീപം, കോട്ടയം', 'ടെമ്പിൾ വ്യൂ വില്ല, കൊച്ചി', 'ശാന്തി നഗർ, തിരുവനന്തപുരം', 'കൽപ്പാത്തി, പാലക്കാട്', 'ആലുവ ഈസ്റ്റ്', 'മൂവാറ്റുപുഴ', 'വൈക്കം', 'ഗുരുവായൂർ തീരം'];
         const categories = [];
 
         const getSeededValue = (seed, mod) => {
@@ -562,9 +562,9 @@ export const DataProvider = ({ children }) => {
         }
 
         try {
-            await supabase.from('devotees').insert(devotees);
-            await supabase.from('collections').insert(collections);
-            await supabase.from('expenses').insert(mockExpenses);
+            await supabase.from('devotees').upsert(devotees, { onConflict: 'id' });
+            await supabase.from('collections').upsert(collections, { onConflict: 'id' });
+            await supabase.from('expenses').upsert(mockExpenses, { onConflict: 'id' });
             toast.success(`1,000 ${t.demo_gen_success}`);
             fetchAllData();
         } catch (err) {
@@ -626,9 +626,9 @@ export const DataProvider = ({ children }) => {
 
     const seedPooramData = async () => {
         setIsLoading(true);
-        const firstNames = ['Arjun', 'Mohan', 'Gopi', 'Sree', 'Vishnu', 'Rahul', 'Adithi', 'Meera', 'Anandu', 'Pranav'];
-        const lastNames = ['Nair', 'Das', 'Kumar', 'Menon', 'Pillai'];
-        const addresses = ['House No. 683, Near Temple', 'Near Mahadeva Temple, Kottayam', 'Temple view Villa, Kochi'];
+        const firstNames = ['അർജുൻ', 'മോഹൻ', 'ഗോപി', 'ശ്രീ', 'വിഷ്ണു', 'രാഹുൽ', 'അദിതി', 'മീര', 'ആനന്ദു', 'പ്രണവ്'];
+        const lastNames = ['നായർ', 'ദാസ്', 'കുമാർ', 'മേനോൻ', 'പിള്ള'];
+        const addresses = ['വീട് നമ്പർ 683, ക്ഷേത്രത്തിന് സമീപം', 'മഹാദേവ ക്ഷേത്രത്തിന് സമീപം, കോട്ടയം', 'ടെമ്പിൾ വ്യൂ വില്ല, കൊച്ചി'];
 
         const getSeededValue = (seed, mod) => {
             let h = 0;
@@ -674,8 +674,8 @@ export const DataProvider = ({ children }) => {
         }
 
         try {
-            await supabase.from('devotees').insert(newDevotees);
-            await supabase.from('collections').insert(newCollections);
+            await supabase.from('devotees').upsert(newDevotees, { onConflict: 'id' });
+            await supabase.from('collections').upsert(newCollections, { onConflict: 'id' });
             toast.success(`500 ${t.demo_gen_success}`);
             fetchAllData();
         } catch (err) {
@@ -687,9 +687,9 @@ export const DataProvider = ({ children }) => {
 
     const seedVilakkuData = async () => {
         setIsLoading(true);
-        const firstNames = ['Kavya', 'Deepa', 'Santhosh', 'Ramesh', 'Vineeth', 'Abhijith'];
-        const lastNames = ['Varier', 'Ayyar', 'Sharma', 'Verma', 'Singh'];
-        const addresses = ['Near Mahadeva Temple, Kottayam', 'Temple view Villa, Kochi', 'Aluva East'];
+        const firstNames = ['കാവ്യ', 'ദീപ', 'സന്തോഷ്', 'രമേഷ്', 'വിനീത്', 'അഭിജിത്ത്'];
+        const lastNames = ['വാരിയർ', 'അയ്യർ', 'ശർമ്മ', 'വർമ്മ', 'സിംഗ്'];
+        const addresses = ['മഹാദേവ ക്ഷേത്രത്തിന് സമീപം, കോട്ടയം', 'ടെമ്പിൾ വ്യൂ വില്ല, കൊച്ചി', 'ആലുവ ഈസ്റ്റ്'];
 
         const getSeededValue = (seed, mod) => {
             let h = 0;
@@ -735,8 +735,8 @@ export const DataProvider = ({ children }) => {
         }
 
         try {
-            await supabase.from('devotees').insert(newDevotees);
-            await supabase.from('collections').insert(newCollections);
+            await supabase.from('devotees').upsert(newDevotees, { onConflict: 'id' });
+            await supabase.from('collections').upsert(newCollections, { onConflict: 'id' });
             toast.success(`500 ${t.demo_gen_success}`);
             fetchAllData();
         } catch (err) {

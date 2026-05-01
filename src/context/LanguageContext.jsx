@@ -28,7 +28,7 @@ const translations = {
         phone: "Phone",
         name: "Name",
         welcome_title: "Kozhimamparamb pooram cheruthuruthy desam",
-        welcome_subtitle: "Welcome back to the Management Portal",
+        welcome_subtitle: "Welcome back to Committee Management Portal",
         // Collections
         collections_history: "Collections History",
         date: "Date",
@@ -126,6 +126,10 @@ const translations = {
         verified_by: "Verified by Temple Administration",
         contribution_details: "Contribution Summary",
         invalid_login: "Invalid username or password",
+        phone_exists: "Devotee already exists with this phone number",
+        cloud_add_error: "Failed to add to cloud",
+        cloud_update_error: "Failed to update in cloud",
+        cloud_delete_error: "Failed to delete from cloud",
         settings_subtitle: "Manage your portal preferences and data",
         backup_json: "Backup JSON",
         backup_json_desc: "Full database backup",
@@ -200,8 +204,8 @@ const translations = {
         expectation: "Expectation",
         collection: "Collection",
         collection_rate: "Collection Rate",
-        pooram_tracker_title: "1. Pooram Tracker",
-        vilakku_tracker_title: "2. Ayyappan Vilakku Tracker",
+        pooram_tracker_title: "1. Pooram",
+        vilakku_tracker_title: "2. Ayyappan Vilakku",
         log_pooram: "Log Pooram Entry",
         log_vilakku: "Log Vilakku Entry",
         year: "Year",
@@ -339,7 +343,7 @@ const translations = {
         phone: "ഫോൺ",
         name: "പേര്",
         welcome_title: "കോഴിമാംപറമ്പ് പൂരം ചെറുതുരുത്തി ദേശം",
-        welcome_subtitle: "ക്ഷേത്ര പരിപാലന പോർട്ടലിലേക്ക് സ്വാഗതം",
+        welcome_subtitle: "കമ്മിറ്റി മാനേജ്‌മെന്റ് പോർട്ടലിലേക്ക് വീണ്ടും സ്വാഗതം",
         // Collections
         collections_history: "പിരിവ് ചരിത്രം",
         date: "തീയതി",
@@ -437,6 +441,10 @@ const translations = {
         verified_by: "ക്ഷേത്ര ഭരണസമിതി സാക്ഷ്യപ്പെടുത്തിയത്",
         contribution_details: "സംഭാവനയുടെ വിവരങ്ങൾ",
         invalid_login: "തെറ്റായ ഉപയോക്തൃനാമം അല്ലെങ്കിൽ പാസ്‌വേഡ്",
+        phone_exists: "ഈ ഫോൺ നമ്പറിൽ ഭക്തൻ നിലവിലുണ്ട്",
+        cloud_add_error: "ക്ലൗഡിലേക്ക് ചേർക്കാൻ കഴിഞ്ഞില്ല",
+        cloud_update_error: "വിവരങ്ങൾ പുതുക്കാൻ കഴിഞ്ഞില്ല",
+        cloud_delete_error: "നീക്കം ചെയ്യാൻ കഴിഞ്ഞില്ല",
         settings_subtitle: "പോർട്ടൽ ക്രമീകരണങ്ങളും ഡാറ്റയും കൈകാര്യം ചെയ്യുക",
         backup_json: "ബാക്കപ്പ് JSON",
         backup_json_desc: "മുഴുവൻ ഡാറ്റയും ബാക്കപ്പ് ചെയ്യുക",
@@ -503,8 +511,8 @@ const translations = {
         expectation: "പ്രതീക്ഷിക്കുന്ന തുക",
         collection: "ലഭിച്ച തുക",
         collection_rate: "ശതമാനം",
-        pooram_tracker_title: "1. പൂരം ട്രാക്കർ",
-        vilakku_tracker_title: "2. അയ്യപ്പൻ വിളക്ക് ട്രാക്കർ",
+        pooram_tracker_title: "1. പൂരം",
+        vilakku_tracker_title: "2. അയ്യപ്പൻ വിളക്ക്",
         log_pooram: "പൂരം വിവരം ചേർക്കുക",
         log_vilakku: "വിളക്ക് വിവരം ചേർക്കുക",
         year: "വർഷം",
@@ -629,7 +637,7 @@ const translations = {
 const LanguageContext = createContext();
 
 export const LanguageProvider = ({ children }) => {
-    const [language, setLanguage] = useState(() => localStorage.getItem('temple_crm_lang') || 'en');
+    const [language, setLanguage] = useState(() => localStorage.getItem('temple_crm_lang') || 'ml');
 
     useEffect(() => {
         localStorage.setItem('temple_crm_lang', language);

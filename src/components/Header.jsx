@@ -5,13 +5,13 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Menu, Phone, MapPin, Eye, EyeOff, UserRound, Settings, LogOut } from 'lucide-react';
+import { Search, X, Menu, Phone, MapPin, Eye, EyeOff, UserRound, Settings, LogOut, RefreshCw } from 'lucide-react';
 import { Haptics } from '../lib/haptics';
 
 const Header = memo(({ title, onMenuClick }) => {
     const { language, setLanguage, t } = useLanguage();
     const { isDarkMode, toggleTheme } = useTheme();
-    const { devoteeData = [], privacyMode, togglePrivacyMode, cloudStatus } = useData() || {};
+    const { devoteeData = [], privacyMode, togglePrivacyMode, cloudStatus, fetchAllData, isLoading } = useData() || {};
     const { userRole, currentUsername, logout } = useAuth();
     const navigate = useNavigate();
 
@@ -204,6 +204,15 @@ const Header = memo(({ title, onMenuClick }) => {
             </div>
 
             <div className="flex items-center gap-4 shrink-0">
+                {/* Mobile Refresh Button */}
+                <button
+                    onClick={() => { Haptics.lightTick(); fetchAllData(); }}
+                    aria-label="Refresh data"
+                    className="p-2.5 text-slate-500 hover:text-orange-500 transition-colors md:hidden active:scale-90"
+                >
+                    <RefreshCw size={20} className={isLoading ? 'animate-spin text-orange-500' : ''} />
+                </button>
+
                 {/* Mobile Search Toggle */}
                 <button
                     onClick={() => { Haptics.lightTick(); setIsMobileSearchOpen(true); }}
@@ -234,6 +243,16 @@ const Header = memo(({ title, onMenuClick }) => {
                         മല
                     </button>
                 </div>
+
+                <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => { Haptics.lightTick(); fetchAllData(); }}
+                    aria-label="Refresh cloud data"
+                    className="relative p-2.5 bg-white/50 border border-white/60 rounded-xl transition-colors hidden sm:block text-slate-500 hover:text-orange-500"
+                >
+                    <RefreshCw size={20} className={isLoading ? 'animate-spin text-orange-500' : ''} />
+                </motion.button>
 
                 <motion.button
                     whileHover={{ scale: 1.05 }}

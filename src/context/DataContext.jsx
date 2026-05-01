@@ -35,6 +35,35 @@ export const DataProvider = ({ children }) => {
     useEffect(() => {
         if (isAuthenticated) {
             fetchAllData();
+            
+            // Step: Initialize Realtime Sync with Throttling
+            let fetchTimer = null;
+            const throttledFetch = () => {
+                if (fetchTimer) clearTimeout(fetchTimer);
+                fetchTimer = setTimeout(() => {
+                    fetchDevotees();
+                    fetchExpenses();
+                }, 500); // Wait 500ms for more changes
+            };
+
+            const channel = supabase
+                .channel('db-changes')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'collections' }, () => {
+                    console.log('Realtime update: collections changed');
+                    throttledFetch();
+                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'devotees' }, () => {
+                    console.log('Realtime update: devotees changed');
+                    throttledFetch();
+                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, () => {
+                    throttledFetch();
+                })
+                .subscribe();
+
+            return () => {
+                supabase.removeChannel(channel);
+            };
         } else {
             setDevoteeData([]);
             setExpenses([]);
@@ -55,7 +84,10 @@ export const DataProvider = ({ children }) => {
         } catch (error) {
             console.error('Error fetching data:', error);
             setCloudStatus('offline');
-            toast.error('Failed to sync with cloud database');
+            // Only toast if it's a real error, not just a cancelled request
+            if (error.message !== 'Fetch is aborted') {
+                toast.error('Failed to sync with cloud database');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -129,6 +161,15 @@ export const DataProvider = ({ children }) => {
     };
 
     const addDevotee = async (devotee) => {
+        // Prevent manual duplicates by phone
+        if (devotee.phone) {
+            const exists = devoteeData.find(d => d.phone === devotee.phone);
+            if (exists) {
+                toast.error(`Devotee already exists with this phone number: ${exists.name}`);
+                return;
+            }
+        }
+
         const { data, error } = await supabase
             .from('devotees')
             .insert([{
@@ -743,46 +784,79 @@ export const DataProvider = ({ children }) => {
     };
 
     const parseExcelFile = (fileBuffer) => {
-        const workbook = XLSX.read(fileBuffer, { type: 'array' });
+        const workbook = XLSX.read(fileBuffer, { type: 'array', cellDates: true });
+
+        const formatDate = (val) => {
+            if (!val) return new Date().toISOString().split('T')[0];
+            
+            // If it's a JS Date object
+            if (val instanceof Date) {
+                return val.toISOString().split('T')[0];
+            }
+            
+            // If it's a number (Excel serial date)
+            if (typeof val === 'number') {
+                // Excel dates are days since 1900-01-01
+                const date = new Date(Math.round((val - 25569) * 86400 * 1000));
+                return date.toISOString().split('T')[0];
+            }
+
+            const str = String(val).trim();
+            if (!str) return new Date().toISOString().split('T')[0];
+
+            // If already YYYY-MM-DD
+            if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str;
+
+            // Try parsing
+            const d = new Date(str);
+            if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+
+            return new Date().toISOString().split('T')[0];
+        };
         
-        // 1. Parse Devotees Sheet (Sheet 0)
-        const devoteeSheet = workbook.Sheets[workbook.SheetNames[0]];
+        // 1. Find and Parse Devotees Sheet
+        const devoteeSheetName = workbook.SheetNames.find(n => 
+            ['devotees', 'members', 'devotee', 'data'].includes(n.toLowerCase())
+        ) || workbook.SheetNames[0];
+        const devoteeSheet = workbook.Sheets[devoteeSheetName];
         const devoteeRows = XLSX.utils.sheet_to_json(devoteeSheet, { defval: '' });
 
-        // 2. Parse Collections Sheet if it exists
-        let collectionRows = [];
+        // 2. Find and Parse Collections Sheet
         const collectionSheetName = workbook.SheetNames.find(n => 
             ['collections', 'payments', 'events', 'receipts'].includes(n.toLowerCase())
         ) || workbook.SheetNames[1];
         
+        let collectionRows = [];
         if (collectionSheetName && workbook.Sheets[collectionSheetName]) {
             collectionRows = XLSX.utils.sheet_to_json(workbook.Sheets[collectionSheetName], { defval: '' });
+        } else if (workbook.SheetNames.length === 1) {
+            collectionRows = devoteeRows;
         }
 
         const normalize = (str) => String(str).toLowerCase().replace(/[\s_\-]/g, '');
         
         const FIELD_MAP = {
-            name:          ['name', 'fullname', 'devotee', 'devoteename', 'membername'],
-            phone:         ['phone', 'mobile', 'contact', 'phoneno', 'mobileno'],
-            address:       ['address', 'addr', 'location', 'place'],
-            totalExpected: ['totalexpected', 'expected', 'annualexpected', 'annual', 'amount'],
-            totalPaid:     ['totalpaid', 'paid', 'paidamount', 'payment'],
-            totalPending:  ['totalpending', 'pending', 'outstanding', 'balance'],
-            status:        ['status', 'paymentstatus'],
+            name:          ['name', 'fullname', 'devotee', 'devoteename', 'membername', 'പേര്', 'ഭക്തൻ'],
+            phone:         ['phone', 'mobile', 'contact', 'phoneno', 'mobileno', 'ഫോൺ', 'മൊബൈൽ'],
+            address:       ['address', 'addr', 'location', 'place', 'വിലാസം', 'സ്ഥലം'],
+            totalExpected: ['totalexpected', 'expected', 'annualexpected', 'annual', 'amount', 'പ്രതീക്ഷിക്കുന്ന തുക', 'പ്രതീക്ഷ'],
+            totalPaid:     ['totalpaid', 'paid', 'paidamount', 'payment', 'അടച്ച തുക', 'പിരിവ്'],
+            totalPending:  ['totalpending', 'pending', 'outstanding', 'balance', 'കുടിശ്ശിക', 'ബാക്കി'],
+            status:        ['status', 'paymentstatus', 'അവസ്ഥ'],
             id:            ['id', 'devoteeid', 'memberid', 'devid'],
         };
 
         const EVENT_FIELD_MAP = {
             devoteeId: ['devoteeid', 'memberid', 'devid', 'id'],
-            date:      ['date', 'paymentdate', 'entrydate'],
-            id:        ['receiptid', 'id', 'recid', 'collectionid'],
-            type:      ['type', 'event', 'category'],
-            book:      ['bookno', 'book', 'bkno'],
-            leaf:      ['leafno', 'leaf', 'lfno'],
-            paid:      ['amountpaid', 'paid', 'amount', 'collection'],
-            pending:   ['pending', 'unpaid', 'balance'],
-            remark:    ['remark', 'note', 'description'],
-            year:      ['year', 'period'],
+            date:      ['date', 'paymentdate', 'entrydate', 'തിയതി', 'തിയ്യതി'],
+            id:        ['receiptid', 'id', 'recid', 'collectionid', 'രസീത്'],
+            type:      ['type', 'event', 'category', 'ഇനം'],
+            book:      ['bookno', 'book', 'bkno', 'ബുക്ക്'],
+            leaf:      ['leafno', 'leaf', 'lfno', 'പേജ്'],
+            paid:      ['amountpaid', 'paid', 'amount', 'collection', 'അടച്ച തുക', 'തുക'],
+            pending:   ['pending', 'unpaid', 'balance', 'ബാക്കി'],
+            remark:    ['remark', 'note', 'description', 'വിവരണം', 'കുറിപ്പ്'],
+            year:      ['year', 'period', 'വർഷം'],
         };
 
         const findCol = (row, candidates) => {
@@ -797,68 +871,143 @@ export const DataProvider = ({ children }) => {
         // Create a temporary ID mapping to handle potential conflicts or new generations
         const idMap = new Map(); // Old ID -> New ID
 
+        // Step: Map existing devotees for duplicate detection
+        const existingPhones = new Map(); // Normalized Phone -> ID
+        const existingNames = new Map();  // Normalized Name|Address -> ID
+
+        devoteeData.forEach(d => {
+            if (d.phone) {
+                const norm = d.phone.replace(/\D/g, '').slice(-10);
+                if (norm.length === 10) existingPhones.set(norm, d.id);
+            }
+            const nameKey = `${normalize(d.name)}|${normalize(d.address || '')}`;
+            existingNames.set(nameKey, d.id);
+        });
+
         let nextIdNum = devoteeData.length > 0
             ? Math.max(...devoteeData.map(d => parseInt((d.id || '0').replace(/\D/g, '')) || 0)) + 1
             : 1001;
 
-        // Process Devotees
-        const records = devoteeRows.map(row => {
+        // Process Devotees - Use a Map to de-duplicate by ID or Name
+        const devoteeMap = new Map();
+        
+        devoteeRows.forEach(row => {
             const name = String(findCol(row, FIELD_MAP.name) || '').trim();
-            if (!name) return null;
+            if (!name) return;
 
             const oldId = String(findCol(row, FIELD_MAP.id) || '').trim();
-            const newId = `DEV-${nextIdNum++}`;
-            if (oldId) idMap.set(oldId, newId);
-
             const phone = String(findCol(row, FIELD_MAP.phone) || '').trim();
             const address = String(findCol(row, FIELD_MAP.address) || '').trim();
-            const totalExpected = Number(findCol(row, FIELD_MAP.totalExpected)) || 0;
-            const totalPaid = Number(findCol(row, FIELD_MAP.totalPaid)) || 0;
-            const totalPending = Number(findCol(row, FIELD_MAP.totalPending)) || Math.max(0, totalExpected - totalPaid);
-            const rawStatus = String(findCol(row, FIELD_MAP.status) || '').trim();
-            const status = rawStatus || (totalPending <= 0 ? 'Paid' : 'Pending');
+            
+            // Step: Detect existing devotee to prevent duplicates
+            let existingId = null;
+            if (oldId) {
+                // If the excel has an ID, we prioritize checking if that ID exists
+                if (devoteeData.some(d => d.id === oldId)) existingId = oldId;
+            }
+            
+            if (!existingId && phone) {
+                const normPh = phone.replace(/\D/g, '').slice(-10);
+                if (normPh.length === 10) existingId = existingPhones.get(normPh);
+            }
+            
+            if (!existingId) {
+                const nameKey = `${normalize(name)}|${normalize(address)}`;
+                existingId = existingNames.get(nameKey);
+            }
 
-            return { 
-                id: newId, 
-                oldId, // Temporarily keep to link events
-                name, phone, address, 
-                totalExpected, totalPaid, totalPending, 
-                status, 
-                events: [] 
-            };
-        }).filter(Boolean);
+            const lookupKey = oldId ? oldId.toUpperCase() : (existingId || name.toLowerCase());
+
+            if (!devoteeMap.has(lookupKey)) {
+                const newId = existingId || oldId || `DEV-${nextIdNum++}`;
+                if (oldId) idMap.set(oldId.toUpperCase(), newId);
+
+                const phone = String(findCol(row, FIELD_MAP.phone) || '').trim();
+                const address = String(findCol(row, FIELD_MAP.address) || '').trim();
+                const totalExpected = Number(findCol(row, FIELD_MAP.totalExpected)) || 0;
+                const totalPaidFromSheet = Number(findCol(row, FIELD_MAP.totalPaid)) || 0;
+                const totalPendingFromSheet = Number(findCol(row, FIELD_MAP.totalPending)) || Math.max(0, totalExpected - totalPaidFromSheet);
+                const rawStatus = String(findCol(row, FIELD_MAP.status) || '').trim();
+                const status = rawStatus || (totalPendingFromSheet <= 0 ? 'Paid' : 'Pending');
+
+                devoteeMap.set(lookupKey, {
+                    id: newId,
+                    oldId: oldId, // Keep for linking events
+                    name, phone, address,
+                    totalExpected,
+                    totalPaid: totalPaidFromSheet,
+                    totalPending: totalPendingFromSheet,
+                    status,
+                    events: []
+                });
+            }
+        });
+
+        const records = Array.from(devoteeMap.values());
 
         // Process and Link Events
         collectionRows.forEach(row => {
-            const devId = String(findCol(row, EVENT_FIELD_MAP.devoteeId) || '').trim();
-            if (!devId) return;
+            const devId = String(findCol(row, EVENT_FIELD_MAP.devoteeId) || '').trim().toUpperCase();
+            const devName = String(findCol(row, FIELD_MAP.name) || '').trim();
+            if (!devId && !devName) return;
 
-            // Find matching devotee by ID
-            const devotee = records.find(r => r.oldId === devId || r.id === devId);
-            if (!devotee) return;
+            // Find matching devotee by ID (oldId or newId) or Name
+            let devotee = records.find(r => 
+                (devId && r.oldId && r.oldId.toUpperCase() === devId) || 
+                (devId && r.id && r.id.toUpperCase() === devId) ||
+                (devName && r.name.toLowerCase() === devName.toLowerCase())
+            );
+            
+            // If devotee not found in devotee list but exists in collections, create a placeholder
+            if (!devotee) {
+                const newId = devId || `DEV-${nextIdNum++}`;
+                devotee = {
+                    id: newId,
+                    name: devName || `Devotee ${newId}`,
+                    phone: '', address: '',
+                    totalExpected: 0, totalPaid: 0, totalPending: 0,
+                    status: 'Pending',
+                    events: []
+                };
+                records.push(devotee);
+                if (devId) idMap.set(devId, newId);
+            }
 
             const paid = Number(findCol(row, EVENT_FIELD_MAP.paid)) || 0;
+            const rawType = String(findCol(row, EVENT_FIELD_MAP.type) || '').trim();
+            
+            // Normalize type to standard values used in UI
+            let type = 'General';
+            if (/pooram/i.test(rawType)) type = 'Pooram';
+            else if (/ayyappan|vilakku/i.test(rawType)) type = 'Ayyappan Vilakku';
+            else if (rawType) type = rawType;
+
             const event = {
-                id: String(findCol(row, EVENT_FIELD_MAP.id) || `REC-${Date.now().toString().slice(-6)}-${Math.random().toString(36).slice(-2)}`),
-                date: String(findCol(row, EVENT_FIELD_MAP.date) || new Date().toISOString().split('T')[0]),
-                year: String(findCol(row, EVENT_FIELD_MAP.year) || new Date().getFullYear()),
-                type: String(findCol(row, EVENT_FIELD_MAP.type) || 'General'),
-                book: String(findCol(row, EVENT_FIELD_MAP.book) || ''),
-                leaf: String(findCol(row, EVENT_FIELD_MAP.leaf) || ''),
+                id: String(findCol(row, EVENT_FIELD_MAP.id) || 
+                    `REC-${devotee.id}-${type.slice(0,2).toUpperCase()}-${formatDate(findCol(row, EVENT_FIELD_MAP.date)).replace(/-/g,'')}-${paid}`
+                ).trim(),
+                date: formatDate(findCol(row, EVENT_FIELD_MAP.date)),
+                year: String(findCol(row, EVENT_FIELD_MAP.year) || new Date().getFullYear()).trim(),
+                type: type,
+                book: String(findCol(row, EVENT_FIELD_MAP.book) || '').trim(),
+                leaf: String(findCol(row, EVENT_FIELD_MAP.leaf) || '').trim(),
                 paid: paid,
                 unpaid: Number(findCol(row, EVENT_FIELD_MAP.pending)) || 0,
-                remark: String(findCol(row, EVENT_FIELD_MAP.remark) || ''),
-                description: `${findCol(row, EVENT_FIELD_MAP.type) || 'Collection'} entry`
+                remark: String(findCol(row, EVENT_FIELD_MAP.remark) || '').trim(),
+                description: `${type} collection (${findCol(row, EVENT_FIELD_MAP.year) || new Date().getFullYear()})`
             };
 
-            devotee.events.push(event);
+            // Prevent duplicate events within the same import or existing state
+            if (!devotee.events.some(e => e.id === event.id)) {
+                devotee.events.push(event);
+            }
         });
 
-        // Clean up: remove temporary oldId and ensure totals are consistent if events were imported
+        // Clean up: ensure totals are consistent if events were imported
         return records.map(r => {
             const { oldId, ...rest } = r;
             if (r.events.length > 0) {
-                // If we imported events, they are the source of truth for paid/pending
+                // If we imported events, calculate totals from them
                 const calcPaid = r.events.reduce((sum, e) => sum + (Number(e.paid) || 0), 0);
                 rest.totalPaid = Math.max(rest.totalPaid, calcPaid);
                 rest.totalPending = Math.max(0, rest.totalExpected - rest.totalPaid);
@@ -866,6 +1015,7 @@ export const DataProvider = ({ children }) => {
             }
             return rest;
         });
+
     };
 
     const importFromExcel = async (fileBuffer) => {
@@ -907,10 +1057,13 @@ export const DataProvider = ({ children }) => {
                 }
             });
 
-            // 2. Insert into Supabase
-            await supabase.from('devotees').insert(devoteesToInsert);
+            // 2. Upsert into Supabase (handle existing records)
+            const { error: devError } = await supabase.from('devotees').upsert(devoteesToInsert, { onConflict: 'id' });
+            if (devError) throw new Error(`Devotee import failed: ${devError.message}`);
+
             if (collectionsToInsert.length > 0) {
-                await supabase.from('collections').insert(collectionsToInsert);
+                const { error: collError } = await supabase.from('collections').upsert(collectionsToInsert, { onConflict: 'id' });
+                if (collError) throw new Error(`Collections import failed: ${collError.message}`);
             }
             
             // 3. Refresh local state

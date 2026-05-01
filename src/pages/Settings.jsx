@@ -19,7 +19,10 @@ import {
     Eye,
     EyeOff,
     Users,
-    Shield
+    Shield,
+    BookOpen,
+    HelpCircle,
+    ChevronRight
 } from 'lucide-react';
 import Modal from '../components/Modal';
 
@@ -336,6 +339,28 @@ const Settings = () => {
                             </button>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            {/* Help & Documentation Section */}
+            <div className="space-y-3">
+                <h2 className="px-4 text-[11px] font-black text-slate-400 uppercase tracking-[0.1em]">{language === 'ml' ? 'സഹായം (Help)' : 'Help & Documentation'}</h2>
+                <div className="ios-section">
+                    <button 
+                        onClick={() => window.location.href = '/manual'}
+                        className="w-full flex items-center justify-between p-6 hover:bg-slate-50 transition-colors"
+                    >
+                        <div className="flex items-center gap-4 text-left">
+                            <div className="w-10 h-10 bg-indigo-100 rounded-[10px] flex items-center justify-center text-indigo-600">
+                                <BookOpen size={20} />
+                            </div>
+                            <div>
+                                <h3 className="text-[15px] font-bold text-slate-900">{t.user_manual}</h3>
+                                <p className="text-[11px] font-medium text-slate-400">{language === 'ml' ? 'ഈ ആപ്പ് എങ്ങനെ ഉപയോഗിക്കാം എന്ന് ഇവിടെ നോക്കാം' : 'Learn how to use the portal step by step'}</p>
+                            </div>
+                        </div>
+                        <ChevronRight className="text-slate-300" size={18} />
+                    </button>
                 </div>
             </div>
 

@@ -8,7 +8,7 @@ import { Haptics } from '../lib/haptics';
 import divineLogo from '../assets/divine_logo.jpg';
 
 const Login = () => {
-    const { login, sendPasswordResetEmail, signInWithGoogle } = useAuth();
+    const { login, sendPasswordResetEmail } = useAuth();
     const { t } = useLanguage();
     const navigate = useNavigate();
     const [username, setUsername] = useState('');
@@ -56,11 +56,6 @@ const Login = () => {
                 type: 'success', 
                 message: t.reset_link_sent || 'Reset link sent to your email!' 
             });
-            setTimeout(() => {
-                setShowForgotModal(false);
-                setForgotStatus({ type: '', message: '' });
-                setForgotEmail('');
-            }, 3000);
         } else {
             Haptics.heavyTap();
             setForgotStatus({ 
@@ -164,12 +159,19 @@ const Login = () => {
                                     </button>
                                 </div>
 
-                                <div className="flex justify-end pr-2">
+                                <div className="flex justify-between items-center px-1">
+                                    <div />
                                     <button
                                         type="button"
-                                        onClick={() => { Haptics.lightTick(); setShowForgotModal(true); }}
-                                        className="text-[10px] font-black uppercase tracking-widest text-orange-500/70 hover:text-orange-600 transition-colors"
+                                        onClick={() => { 
+                                            Haptics.lightTick(); 
+                                            setForgotStatus({ type: '', message: '' });
+                                            setForgotEmail('');
+                                            setShowForgotModal(true); 
+                                        }}
+                                        className="text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:text-orange-500 transition-all flex items-center gap-1 group/forgot"
                                     >
+                                        <Sparkle size={10} className="group-hover/forgot:rotate-12 transition-transform" />
                                         {t.forgot_password || 'Forgot Password?'}
                                     </button>
                                 </div>
@@ -207,26 +209,6 @@ const Login = () => {
                             </motion.button>
                         </form>
 
-                        <div className="flex items-center gap-4 py-8">
-                            <div className="h-px bg-slate-100 flex-1" />
-                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">OR</span>
-                            <div className="h-px bg-slate-100 flex-1" />
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={() => { Haptics.lightTick(); signInWithGoogle(); }}
-                            className="w-full py-4 bg-white border border-slate-100 rounded-2xl font-bold text-slate-600 shadow-sm hover:shadow-md hover:bg-slate-50 transition-all flex items-center justify-center gap-3 group"
-                        >
-                            <svg className="w-5 h-5" viewBox="0 0 24 24">
-                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                                <path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.84z" />
-                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                            </svg>
-                            <span className="text-xs uppercase tracking-widest font-black">Continue with Google</span>
-                        </button>
-
                         <footer className="mt-12 text-center">
                             <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
                                 Secure Identity Access • 2026 Admin
@@ -241,65 +223,107 @@ const Login = () => {
                 {showForgotModal && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/20 backdrop-blur-sm">
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            initial={{ opacity: 0, scale: 0.9, y: 40 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="w-full max-w-[400px] bg-white rounded-[32px] p-8 md:p-10 shadow-2xl relative z-10"
+                            exit={{ opacity: 0, scale: 0.9, y: 40 }}
+                            className="w-full max-w-[420px] bg-white rounded-[40px] p-10 md:p-12 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.2)] relative z-10 border border-white"
                         >
-                            <div className="flex flex-col items-center text-center mb-8">
-                                <div className="w-16 h-16 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center mb-4">
-                                    <Mail size={32} />
-                                </div>
-                                <h3 className="font-serif text-2xl text-slate-800 mb-2">{t.reset_password || 'Reset Password'}</h3>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                    {t.reset_desc || 'Identify your account to continue'}
-                                </p>
-                            </div>
-
-                            <form onSubmit={handleForgotPassword} className="space-y-4">
-                                <div className="relative">
-                                    <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                                    <input
-                                        type="email"
-                                        placeholder={t.email_address || 'Email Address'}
-                                        className="w-full bg-slate-50 border border-slate-100 focus:border-orange-500/30 focus:bg-white rounded-2xl pl-14 pr-6 py-4 outline-none transition-all font-bold text-slate-700 text-[15px]"
-                                        value={forgotEmail}
-                                        onChange={(e) => setForgotEmail(e.target.value)}
-                                        required
-                                        disabled={isForgotLoading}
-                                    />
-                                </div>
-
-                                {forgotStatus.message && (
+                            <AnimatePresence mode="wait">
+                                {forgotStatus.type === 'success' ? (
                                     <motion.div
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: 'auto' }}
-                                        className={`p-4 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-2 ${
-                                            forgotStatus.type === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
-                                        }`}
+                                        key="success"
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="flex flex-col items-center text-center py-6"
                                     >
-                                        <Sparkle size={14} />
-                                        {forgotStatus.message}
+                                        <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-[28px] flex items-center justify-center mb-8 shadow-inner">
+                                            <ShieldCheck size={40} />
+                                        </div>
+                                        <h3 className="font-serif text-3xl text-slate-900 mb-4">{t.reset_link_sent || 'Link Sent!'}</h3>
+                                        <p className="text-sm font-medium text-slate-500 mb-8 leading-relaxed">
+                                            {t.reset_success_desc || 'We have sent a secure password reset link to your email address. Please check your inbox and spam folder.'}
+                                        </p>
+                                        <button
+                                            onClick={() => {
+                                                setShowForgotModal(false);
+                                                setForgotStatus({ type: '', message: '' });
+                                                setForgotEmail('');
+                                            }}
+                                            className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-slate-900/20"
+                                        >
+                                            {t.done || 'Done'}
+                                        </button>
+                                    </motion.div>
+                                ) : (
+                                    <motion.div key="form" exit={{ opacity: 0, y: -10 }}>
+                                        <div className="flex flex-col items-center text-center mb-10">
+                                            <div className="w-16 h-16 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center mb-6">
+                                                <Mail size={32} />
+                                            </div>
+                                            <h3 className="font-serif text-2xl md:text-3xl text-slate-800 mb-3">{t.reset_password || 'Reset Password'}</h3>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                                                {t.reset_desc || 'Identify your account to continue'}
+                                            </p>
+                                        </div>
+
+                                        <form onSubmit={handleForgotPassword} className="space-y-6">
+                                            <div className="relative">
+                                                <User className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                                                <input
+                                                    type="text"
+                                                    placeholder={t.username || 'Username'}
+                                                    className="w-full bg-slate-50 border border-slate-100 focus:border-orange-500/30 focus:bg-white rounded-2xl pl-14 pr-6 py-5 outline-none transition-all font-bold text-slate-700 text-[15px]"
+                                                    value={forgotEmail}
+                                                    onChange={(e) => setForgotEmail(e.target.value)}
+                                                    required
+                                                    disabled={isForgotLoading}
+                                                />
+                                            </div>
+
+                                            <div className="px-2 py-1">
+                                                <p className="text-[10px] font-bold text-slate-400 leading-relaxed italic">
+                                                    * Reset link will be sent to the Master Email: <span className="text-orange-500">cheruthuruthydhesapooram@gmail.com</span>
+                                                </p>
+                                            </div>
+
+                                            {forgotStatus.message && forgotStatus.type === 'error' && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, height: 0 }}
+                                                    animate={{ opacity: 1, height: 'auto' }}
+                                                    className="p-4 rounded-2xl bg-rose-50 text-rose-600 text-[10px] font-black uppercase tracking-wider flex items-center gap-2 border border-rose-100"
+                                                >
+                                                    <Sparkle size={14} />
+                                                    {forgotStatus.message}
+                                                </motion.div>
+                                            )}
+
+                                            <div className="flex flex-col gap-4 pt-2">
+                                                <button
+                                                    type="submit"
+                                                    disabled={isForgotLoading}
+                                                    className="w-full py-5 bg-orange-500 text-white rounded-2xl font-black shadow-xl shadow-orange-500/25 flex items-center justify-center gap-3 group transition-all hover:bg-orange-600"
+                                                >
+                                                    {isForgotLoading ? (
+                                                        <Loader2 size={20} className="animate-spin" />
+                                                    ) : (
+                                                        <>
+                                                            <span className="uppercase tracking-widest text-sm">{t.send_link || 'Send Reset Link'}</span>
+                                                            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                                        </>
+                                                    )}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowForgotModal(false)}
+                                                    className="w-full py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors"
+                                                >
+                                                    {t.cancel || 'Cancel'}
+                                                </button>
+                                            </div>
+                                        </form>
                                     </motion.div>
                                 )}
-
-                                <div className="flex flex-col gap-3 pt-4">
-                                    <button
-                                        type="submit"
-                                        disabled={isForgotLoading}
-                                        className="w-full py-4 bg-orange-500 text-white rounded-2xl font-black shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2"
-                                    >
-                                        {isForgotLoading ? <Loader2 size={18} className="animate-spin" /> : t.send_link || 'Send Reset Link'}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowForgotModal(false)}
-                                        className="w-full py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600"
-                                    >
-                                        {t.cancel || 'Cancel'}
-                                    </button>
-                                </div>
-                            </form>
+                            </AnimatePresence>
                         </motion.div>
                     </div>
                 )}

@@ -73,11 +73,12 @@
       display: none;
     }
     .mesh-blob {
-      filter: blur(40px);
+      filter: blur(30px); /* Reduced blur for performance */
       animation-duration: 40s;
+      opacity: 0.1;
     }
     .mesh-container {
-      filter: blur(40px);
+      filter: blur(30px);
     }
   }
 
@@ -238,14 +239,26 @@
 
 @layer components {
   .glass-card {
-    @apply border rounded-[28px] backdrop-blur-3xl transition-all duration-300 relative overflow-hidden;
+    @apply border rounded-[28px] transition-all duration-300 relative overflow-hidden;
     background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px) saturate(180%);
     border-color: rgba(255, 255, 255, 0.5);
     box-shadow: 
       0 0.5px 0 0 rgba(255,255,255,0.8) inset,
       0 1px 2px rgba(0,0,0,0.02),
       0 16px 48px -12px rgba(0,0,0,0.08);
     will-change: transform, opacity;
+  }
+
+  /* Optimize blur for mobile */
+  @media (max-width: 768px) {
+    .glass-card {
+      backdrop-filter: blur(12px) saturate(160%); /* Lighter blur for mobile GPU */
+      background: rgba(255, 255, 255, 0.85);
+    }
+    .ios-section {
+      backdrop-filter: blur(12px);
+    }
   }
 
   /* Specular rim (iOS high-end light simulation) */
@@ -397,59 +410,86 @@
 
 /* ─── NATIVE PRINT SYSTEM ────────────────────────────────────────────────── */
 @media print {
-    /* Step 1: Hide everything that should not be on paper */
-    nav, footer, header, aside, .sidebar, .bottom-nav, .fab-container, 
-    .glass-search-container, .aura-mesh, .noise-overlay, .mesh-container,
-    [role="dialog"] button, [role="dialog"] h3, .sticky {
-        display: none !important;
-    }
-
-    /* Step 2: Global reset to strip margins/padding and offsets */
+    /* Step 1: Force body to show and background to white */
     html, body {
-        background: white !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        height: auto !important;
-        overflow: visible !important;
-    }
-
-    /* Keep the structural containers but remove their styling impacts */
-    #root, main, [role="dialog"] {
-        position: static !important;
-        display: block !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        height: auto !important;
-        overflow: visible !important;
-        background: white !important;
-        box-shadow: none !important;
-        border: none !important;
-    }
-
-    /* Hide the page content behind the modal */
-    main > div:first-of-type {
-        display: none !important;
-    }
-
-    /* Step 3: Target the receipt specifically and anchor to top */
-    #printable-receipt {
-        display: block !important;
         visibility: visible !important;
-        position: relative !important;
+        background: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+        width: 100% !important;
+        overflow: visible !important;
+    }
+
+    /* Step 2: Hide EVERYTHING except the receipt and its parents */
+    /* We use visibility: hidden so that ancestors stay in the layout tree */
+    body * {
+        visibility: hidden !important;
+        opacity: 1 !important; /* Force opacity for parents */
+        transform: none !important; /* Kill any animations */
+    }
+
+    /* Ensure parents don't interfere with visibility but PRESERVE their layout children */
+    html, body, #root, main, [role="dialog"], [role="dialog"] > div, [role="dialog"] .flex-1, [role="dialog"] .overflow-y-auto {
+        display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: none !important;
+        overflow: visible !important;
+        height: auto !important;
+        background: white !important;
+    }
+
+    /* Use display: contents for the modal inner wrappers so they don't break the receipt's flex/grid */
+    [role="dialog"] > div, [role="dialog"] .flex-1, [role="dialog"] .overflow-y-auto {
+        display: contents !important;
+    }
+
+    /* Step 4: Special case for specific elements that MUST be hidden */
+    .print-button, button, nav, footer, header, aside, .sidebar, .bottom-nav, 
+    .fab-container, .glass-search-container, .aura-mesh, .noise-overlay, .mesh-container,
+    #modal-title, [aria-hidden="true"], .md\:hidden {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    /* Step 5: Position the receipt at the top left of the actual paper */
+    #printable-receipt {
+        position: absolute !important; /* Absolute is better for display:contents parents */
         top: 0 !important;
         left: 0 !important;
         width: 100% !important;
-        max-width: 600px !important;
+        max-width: 210mm !important;
         margin: 0 auto !important;
-        padding: 40px !important;
+        padding: 15mm !important;
         background: white !important;
+        z-index: 2147483647 !important;
+        visibility: visible !important;
+        display: block !important; /* The receipt itself is a block container */
         border: none !important;
         box-shadow: none !important;
         border-radius: 0 !important;
-        z-index: 10000 !important;
     }
 
-    /* Force background colors and transparency adjustments */
+    /* Restore flex/grid for internal elements */
+    #printable-receipt .flex { display: flex !important; }
+    #printable-receipt .grid { display: grid !important; }
+
+    /* Keep the internal layout of the receipt intact and remove transforms */
+    #printable-receipt * {
+        visibility: visible !important;
+        transform: none !important;
+        animation: none !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Increase watermark opacity for print */
+    #printable-receipt .opacity-5 {
+        opacity: 0.15 !important;
+    }
+
+    /* Force background colors/images */
     * {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;

@@ -7,105 +7,124 @@ import { Haptics } from '../lib/haptics';
 
 // Inner receipt layout — used both in preview and during print
 const ReceiptContent = ({ data, t }) => (
-    <div id="printable-receipt" className="p-10 bg-white text-slate-900 w-full max-w-[580px] mx-auto border-[12px] border-orange-50/50 rounded-3xl font-outfit relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-orange-100/20 rounded-full blur-3xl -mr-16 -mt-16"></div>
+    <div id="printable-receipt" className="p-8 md:p-12 bg-white text-slate-900 w-full max-w-[620px] mx-auto border-[16px] border-orange-50/30 rounded-[48px] font-outfit relative overflow-hidden print:border-none print:p-0">
+        {/* Decorative corner accent */}
+        <div className="absolute top-0 right-0 w-40 h-40 bg-orange-100/20 rounded-full blur-3xl -mr-20 -mt-20"></div>
         
-        <div className="flex flex-col md:flex-row justify-between items-start border-b-2 border-slate-100 pb-10 mb-10 relative z-10 gap-6">
-            <div className="flex-1">
-                <div className="flex items-center gap-5 mb-4">
-                    <div className="w-16 h-16 bg-white border-2 border-orange-50 rounded-[22px] overflow-hidden shadow-xl shadow-orange-100/50 flex-shrink-0">
-                        <img src={divineLogo} alt="Temple Logo" className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-black text-slate-800 tracking-tighter leading-tight uppercase">
-                            Kozhimamparamb Pooram
-                        </h1>
-                        <h2 className="text-sm font-black text-slate-500 tracking-[0.2em] uppercase mt-0.5">
-                            Cheruthuruthy Desam
-                        </h2>
-                        <p className="text-[9px] font-black text-orange-500 uppercase tracking-[0.3em] mt-2">{t.divine_portal}</p>
-                    </div>
+        {/* Header Section */}
+        <div className="flex justify-between items-start border-b border-slate-100 pb-10 mb-10 relative z-10 gap-8">
+            <div className="flex items-center gap-6 flex-1">
+                <div className="w-14 h-14 bg-white border border-orange-100 rounded-[20px] overflow-hidden shadow-lg shadow-orange-100/50 flex-shrink-0 p-1 ring-4 ring-orange-50/50">
+                    <img src={divineLogo} alt="Temple Logo" className="w-full h-full object-cover rounded-[16px]" />
                 </div>
-                <div className="flex gap-4">
-                    <p className="text-[9px] font-black text-slate-400 flex items-center gap-1.5 uppercase tracking-wider"><span className="w-1 h-1 bg-orange-500 rounded-full"></span> {t.official_copy}</p>
-                    <p className="text-[9px] font-black text-slate-400 flex items-center gap-1.5 uppercase tracking-wider"><span className="w-1 h-1 bg-orange-500 rounded-full"></span> {t.digital_record}</p>
+                <div>
+                    <h1 className="text-xl font-black text-slate-900 tracking-tighter leading-tight uppercase mb-0.5">
+                        Kozhimamparamb <span className="text-orange-500">Pooram</span>
+                    </h1>
+                    <h2 className="text-[10px] font-bold text-slate-400 tracking-[0.25em] uppercase leading-none">
+                        Cheruthuruthy Desam
+                    </h2>
+                    <div className="flex gap-3 mt-3">
+                        <span className="px-2 py-0.5 bg-orange-50 text-[8px] font-black text-orange-500 uppercase tracking-[0.1em] rounded-md border border-orange-100/50">Official Copy</span>
+                        <span className="px-2 py-0.5 bg-slate-50 text-[8px] font-black text-slate-400 uppercase tracking-[0.1em] rounded-md border border-slate-100">Digital Record</span>
+                    </div>
                 </div>
             </div>
             
             <div className="text-right shrink-0">
-                <div className="bg-slate-50 border border-slate-100 px-5 py-3 rounded-[20px] mb-3 inline-block">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{t.receipt_id}</p>
-                    <p className="font-mono text-[15px] font-black text-slate-800 tracking-wider">#{data.id}</p>
+                <div className="bg-slate-50/80 border border-slate-100 px-5 py-3 rounded-[24px] mb-3 inline-block backdrop-blur-sm">
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">{t.receipt_id}</p>
+                    <p className="font-mono text-sm font-bold text-slate-800 tracking-widest">#{data.id}</p>
                 </div>
-                <div className="flex flex-col items-end">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{data.date?.split('-').reverse().join('/')}</p>
-                    <div className="w-12 h-0.5 bg-orange-500 mt-1 rounded-full opacity-30"></div>
+                <div className="flex flex-col items-end pr-2">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{data.date?.split('-').reverse().join('/')}</p>
+                    <div className="w-8 h-1 bg-orange-500 mt-1.5 rounded-full opacity-30"></div>
                 </div>
             </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-12 mb-12 relative z-10 px-2">
-            <div>
-                <div className="flex items-center gap-3 mb-3">
-                    <div className="w-1 h-4 bg-orange-500 rounded-full"></div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t.devotee_details}</p>
+        {/* Devotee Info Grid */}
+        <div className="grid grid-cols-2 gap-10 mb-10 relative z-10 px-2">
+            <div className="space-y-3">
+                <div className="flex items-center gap-2.5">
+                    <div className="w-1 h-3.5 bg-orange-500 rounded-full"></div>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{t.devotee_details}</p>
                 </div>
-                <p className="font-black text-2xl text-slate-800 leading-tight mb-1">{data.devoteeName || '—'}</p>
-                {data.devoteeId && (
-                    <p className="inline-flex px-2 py-0.5 bg-slate-50 text-[9px] font-black text-slate-400 rounded uppercase tracking-wider border border-slate-100">
-                        {t.reg_id}: #{data.devoteeId}
-                    </p>
-                )}
+                <div>
+                    <p className="font-black text-2xl text-slate-900 leading-tight mb-1.5 tracking-tight">{data.devoteeName || '—'}</p>
+                    {data.devoteeId && (
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.1em] flex items-center gap-1.5">
+                            <span className="text-orange-500">#</span> {t.reg_id}: {data.devoteeId}
+                        </p>
+                    )}
+                </div>
             </div>
             
-            <div className="text-right">
-                <div className="flex items-center justify-end gap-3 mb-3">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{data.book ? t.reg_reference : t.collection_type}</p>
-                    <div className="w-1 h-4 bg-orange-500 rounded-full"></div>
+            <div className="text-right space-y-3">
+                <div className="flex items-center justify-end gap-2.5">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{data.book ? t.reg_reference : t.collection_type}</p>
+                    <div className="w-1 h-3.5 bg-orange-500 rounded-full"></div>
                 </div>
-                
-                {data.book ? (
-                    <p className="font-mono text-xl font-black text-slate-800 tracking-tight">{data.book} <span className="text-slate-200">/</span> {data.leaf}</p>
-                ) : (
-                    <p className="font-black text-xl text-slate-800">{data.type || 'General'}</p>
-                )}
+                <div>
+                    {data.book ? (
+                        <p className="font-mono text-xl font-bold text-slate-900 tracking-tight">
+                            BK-{data.book.replace('BK-', '')} 
+                            <span className="text-slate-200 mx-1.5">/</span> 
+                            LF-{data.leaf.replace('LF-', '')}
+                        </p>
+                    ) : (
+                        <p className="font-black text-xl text-slate-900">{data.type || 'General'}</p>
+                    )}
+                </div>
             </div>
         </div>
 
-        <div className="bg-slate-50/50 border-2 border-slate-100/50 p-10 rounded-[40px] mb-12 relative z-10 backdrop-blur-sm">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-6 text-center">{t.contribution_summary}</p>
-            
-            <div className="flex justify-between items-center mb-6 pb-6 border-b border-dashed border-slate-200">
-                <div className="flex flex-col">
-                    <p className="text-[13px] font-black text-slate-800 leading-none mb-1">{data.description || t.temple_dev_pooja}</p>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Contribution Amount</p>
-                </div>
-                <p className="text-[15px] font-black text-slate-700">₹{parseFloat(data.paid).toLocaleString()}</p>
+        {/* Summary Card */}
+        <div className="bg-slate-50/30 border-2 border-slate-100/50 p-10 rounded-[40px] mb-10 relative z-10">
+            <div className="flex justify-center mb-8">
+                <span className="px-4 py-1.5 bg-white border border-slate-100 rounded-full text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] shadow-sm">{t.contribution_summary}</span>
             </div>
             
-            <div className="flex justify-between items-end pt-2">
-                <div className="flex flex-col">
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 leading-none">{t.total_paid_label}</p>
-                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest leading-none">Accepted & Verified</p>
+            <div className="flex justify-between items-center mb-8 pb-8 border-b border-dashed border-slate-200">
+                <div className="flex flex-col gap-1.5">
+                    <p className="text-base font-black text-slate-900 leading-none">{data.description || t.temple_dev_pooja}</p>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest opacity-80">Category / Event Note</p>
+                </div>
+                <p className="text-lg font-bold text-slate-700 tabular-nums">₹{parseFloat(data.paid).toLocaleString()}</p>
+            </div>
+            
+            <div className="flex justify-between items-center">
+                <div className="flex flex-col gap-1">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none">{t.total_paid_label}</p>
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-1 h-1 bg-emerald-500 rounded-full"></div>
+                        <p className="text-[8px] font-black text-emerald-600 uppercase tracking-widest leading-none">Accepted & Verified</p>
+                    </div>
                 </div>
                 <div className="text-right">
-                    <p className="text-5xl font-black text-emerald-700 tracking-tighter tabular-nums leading-none">₹{parseFloat(data.paid).toLocaleString()}</p>
+                    <p className="text-5xl font-black text-emerald-700 tracking-tighter tabular-nums leading-none">
+                        <span className="text-3xl mr-1 opacity-50 font-black">₹</span>
+                        {parseFloat(data.paid).toLocaleString()}
+                    </p>
                 </div>
             </div>
         </div>
 
-        <div className="flex justify-between items-end border-t-2 border-slate-100 pt-10 relative z-10 px-2 opacity-80">
-            <div className="text-[9px] text-slate-400 space-y-2 font-black uppercase tracking-[0.15em]">
-                <p className="flex items-center gap-2 text-slate-500"><span className="w-1 h-1 bg-slate-300 rounded-full"></span> {t.computer_generated}</p>
-                <p className="flex items-center gap-2"><span className="w-1 h-1 bg-slate-300 rounded-full"></span> {t.payment_method}: <span className="text-slate-700">{data.method || 'Cash'}</span></p>
-                <p className="flex items-center gap-2"><span className="w-1 h-1 bg-orange-400 rounded-full"></span> {t.verified_by}</p>
-            </div>
-            
-            <div className="text-center group">
-                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-3 mx-auto transition-transform group-hover:scale-110 duration-500 shadow-lg shadow-orange-100 overflow-hidden border-2 border-white ring-2 ring-orange-500/5">
-                    <img src={divineLogo} alt="Logo" className="w-full h-full object-cover scale-110" />
+        {/* Footer Meta */}
+        <div className="flex justify-between items-end border-t border-slate-100 pt-10 relative z-10 px-2">
+            <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 bg-slate-200 rounded-full"></div>
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">{t.computer_generated}</p>
                 </div>
-                <p className="text-[9px] font-black text-orange-500 uppercase tracking-[0.3em] animate-pulse">Jai Mahadeva</p>
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 bg-slate-200 rounded-full"></div>
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">{t.payment_method}: <span className="text-slate-800">{data.method || 'Cash'}</span></p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 bg-orange-400/50 rounded-full animate-pulse"></div>
+                    <p className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">{t.verified_by}</p>
+                </div>
             </div>
         </div>
         
@@ -126,11 +145,22 @@ const Receipt = ({ data, onClose }) => {
     const handlePrint = () => {
         const printContent = document.getElementById('printable-receipt');
         if (!printContent) return;
+        
         Haptics.lightTick();
-        // Give the browser a moment to update layout for print
+        
+        // Fix: Set automatic filename for PDF saving
+        const originalTitle = document.title;
+        const fileName = `Receipt_${data.devoteeName || 'Devotee'}_${data.id || 'ID'}`;
+        document.title = fileName;
+
+        // Give the browser a moment to update layout for print and finish animations
         setTimeout(() => {
             window.print();
-        }, 150);
+            // Restore original title after a short delay
+            setTimeout(() => {
+                document.title = originalTitle;
+            }, 1000);
+        }, 500);
     };
 
     return (

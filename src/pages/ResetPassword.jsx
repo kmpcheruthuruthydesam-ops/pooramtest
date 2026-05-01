@@ -148,20 +148,29 @@ const ResetPassword = () => {
                         </AnimatePresence>
 
                         <motion.button
-                            whileHover={{ scale: 1.02 }}
+                            whileHover={{ scale: 1.01 }}
                             whileTap={{ scale: 0.98 }}
-                            disabled={isLoading}
+                            disabled={isLoading || status.type === 'success'}
                             type="submit"
-                            className="w-full py-4 md:py-5 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-[20px] md:rounded-[24px] font-black shadow-xl shadow-orange-500/30 flex items-center justify-center gap-3"
+                            className="w-full py-4.5 bg-slate-900 text-white rounded-2xl font-black shadow-2xl shadow-slate-900/20 flex items-center justify-center gap-3 disabled:opacity-70 transition-all hover:bg-slate-800"
                         >
                             {isLoading ? <Loader2 size={20} className="animate-spin" /> : (
                                 <>
-                                    <span>Update Password</span>
-                                    <ArrowRight size={20} />
+                                    <span className="text-sm uppercase tracking-widest">{t.update_password || 'Update Password'}</span>
+                                    <ArrowRight size={18} />
                                 </>
                             )}
                         </motion.button>
                     </form>
+
+                    <footer className="mt-10 text-center">
+                        <button
+                            onClick={() => navigate('/login')}
+                            className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-orange-500 transition-colors"
+                        >
+                            {t.back_to_login || 'Back to Login'}
+                        </button>
+                    </footer>
                 </div>
             </motion.div>
         </div>

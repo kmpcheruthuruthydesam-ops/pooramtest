@@ -14,6 +14,7 @@ const Profile = lazy(() => import('./pages/Profile'));
 const Login = lazy(() => import('./pages/Login'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const Other = lazy(() => import('./pages/Other'));
+const UserManual = lazy(() => import('./pages/UserManual'));
 
 const PageLoader = ({ message = 'Loading Experience' }) => (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/80 backdrop-blur-md">
@@ -54,6 +55,7 @@ const App = () => {
                     <Route path="expenses" element={<Expenses />} />
                     <Route path="other" element={<Other />} />
                     <Route path="settings" element={<Settings />} />
+                    <Route path="manual" element={<UserManual />} />
                     <Route path="profile/:id" element={<Profile />} />
                 </Route>
 

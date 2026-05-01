@@ -11,7 +11,8 @@ import {
     Settings as SettingsIcon,
     LogOut,
     ChevronRight,
-    Layers
+    Layers,
+    BookOpen
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Haptics } from '../lib/haptics';

@@ -34,7 +34,12 @@ export const AuthProvider = ({ children }) => {
 
     const handleSession = async (session) => {
         setIsAuthenticated(true);
-        setCurrentUsername(session.user.email);
+        // Display username part if it's an internal temple email
+        const email = session.user.email;
+        const displayUsername = email.endsWith('@temple.internal') 
+            ? email.split('@')[0] 
+            : email;
+        setCurrentUsername(displayUsername);
         
         // Fetch profile to ensure record exists
         const { data: profile } = await supabase
@@ -66,7 +71,17 @@ export const AuthProvider = ({ children }) => {
         setCurrentUsername(null);
     };
 
-    const login = async (email, password) => {
+    const login = async (credential, password) => {
+        // Fix: Map 'admin' specifically to the master email
+        let email = credential;
+        if (!credential.includes('@')) {
+            if (credential.toLowerCase() === 'admin') {
+                email = 'cheruthuruthydhesapooram@gmail.com';
+            } else {
+                email = `${credential.toLowerCase()}@temple.internal`;
+            }
+        }
+
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
@@ -91,10 +106,21 @@ export const AuthProvider = ({ children }) => {
         return { success: !error, error: error?.message };
     };
 
-    const sendPasswordResetEmail = async (email) => {
+    const sendPasswordResetEmail = async (credential) => {
+        // Fix: Map 'admin' specifically to the master email for recovery
+        let email = credential;
+        if (!credential.includes('@')) {
+            if (credential.toLowerCase() === 'admin') {
+                email = 'cheruthuruthydhesapooram@gmail.com';
+            } else {
+                email = `${credential.toLowerCase()}@temple.internal`;
+            }
+        }
+            
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
             redirectTo: `${window.location.origin}/reset-password`,
         });
+        
         return { success: !error, error: error?.message };
     };
 

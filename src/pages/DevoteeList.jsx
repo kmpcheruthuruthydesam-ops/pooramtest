@@ -3,7 +3,7 @@ import { useData } from '../context/DataContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, UserPlus, Download, Edit2, Trash2, ArrowRight, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { Search, UserPlus, Download, Edit2, Trash2, ArrowRight, X, ChevronUp, ChevronDown, Check } from 'lucide-react';
 import Modal from '../components/Modal';
 import DevoteeForm from '../components/DevoteeForm';
 import { useNavigate, Link } from 'react-router-dom';
@@ -28,6 +28,84 @@ const SortHeader = memo(({ label, field, sort, onSort, className = '' }) => {
                 </span>
             </span>
         </th>
+    );
+});
+
+// Performance Fix: Memoized Mobile Card to prevent unnecessary re-renders
+const MobileDevoteeCard = memo(({ devotee, t, deleteDevotee }) => {
+    return (
+        <div className="relative group overflow-hidden rounded-3xl [content-visibility:auto] [contain-intrinsic-size:0_100px]">
+            {/* Action Backing (Hidden Underneath) */}
+            <div className="absolute inset-0 flex items-center justify-end px-6 gap-3 bg-slate-900/5 rounded-3xl">
+                <button 
+                    onClick={(e) => { e.preventDefault(); }} 
+                    className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg active:scale-90 transition-transform"
+                >
+                    <Search size={16} />
+                </button>
+                <button 
+                    onClick={(e) => {
+                        e.preventDefault();
+                        Haptics.heavyTap();
+                        deleteDevotee(devotee.id);
+                    }}
+                    className="w-10 h-10 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-lg active:scale-90 transition-transform"
+                >
+                    <X size={16} />
+                </button>
+            </div>
+
+            <motion.div
+                drag="x"
+                dragConstraints={{ left: -120, right: 0 }}
+                dragElastic={0.05}
+                dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+                whileDrag={{ scale: 1.01 }}
+                onDragStart={() => window.isDragging = true}
+                onDragEnd={() => setTimeout(() => window.isDragging = false, 100)}
+                className="relative z-10"
+            >
+                <Link 
+                    to={`/profile/${devotee.id}`} 
+                    onClick={(e) => {
+                        if (window.isDragging) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
+                    }}
+                    className="flex items-center gap-4 p-5 glass-card !rounded-3xl border-white/80 active:bg-white/90 transition-colors"
+                >
+                    {/* Letter avatar */}
+                    <div className="w-12 h-12 rounded-[18px] bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-black text-[17px] shrink-0 shadow-lg shadow-orange-100 border border-white/40 active:scale-95 transition-transform">
+                        {devotee.name?.charAt(0)?.toUpperCase()}
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-2 mb-0.5">
+                            <p className="text-[16px] font-bold text-slate-900 truncate leading-tight">{devotee.name}</p>
+                            {devotee.isNirapara && (
+                                <span className="px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded-md text-[9px] font-black shrink-0 tracking-tighter uppercase">Nirapara</span>
+                            )}
+                        </div>
+                        <p className="text-[13px] font-medium text-slate-400 tabular-nums">{devotee.phone}</p>
+                    </div>
+                    
+                    <div className="text-right shrink-0 mr-1">
+                        <p className={`text-[15px] font-black tabular-nums ${Number(devotee.totalPending) > 0 ? 'text-rose-500' : 'text-emerald-600'}`}>
+                            ₹{(Number(devotee.totalPending) || 0).toLocaleString()}
+                        </p>
+                        <p className={`text-[10px] font-black uppercase tracking-widest mt-0.5 ${devotee.status === 'Paid' ? 'text-emerald-500' : 'text-orange-500'}`}>
+                            {devotee.status === 'Paid' ? t.paid : t.pending}
+                        </p>
+                    </div>
+                    
+                    {/* iOS chevron */}
+                    <svg width="6" height="10" viewBox="0 0 6 10" fill="none" className="text-slate-300 shrink-0">
+                        <path d="M1 1L5 5L1 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                </Link>
+            </motion.div>
+        </div>
     );
 });
 
@@ -59,14 +137,18 @@ const DevoteeList = () => {
             setDebouncedTerm(searchTerm);
         }, 200);
 
+        // Optimized scroll listener with frame check
+        let ticking = false;
         const handleScroll = () => {
-            const container = document.querySelector('.glass-search-container');
-            if (container) {
-                // Check if sticky by position or threshold
-                setIsSticky(window.scrollY > 10);
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    setIsSticky(window.scrollY > 10);
+                    ticking = false;
+                });
+                ticking = true;
             }
         };
-        window.addEventListener('scroll', handleScroll);
+        window.addEventListener('scroll', handleScroll, { passive: true });
         
         return () => {
             clearTimeout(timer);
@@ -109,7 +191,6 @@ const DevoteeList = () => {
             return matchesSearch && matchesStatus;
         });
 
-        // Fix 4: apply sort
         if (sort.field) {
             data = [...data].sort((a, b) => {
                 let av = a[sort.field], bv = b[sort.field];
@@ -135,7 +216,6 @@ const DevoteeList = () => {
 
     return (
         <div className="flex flex-col">
-            {/* ═══ FLOATING SEARCH BAR (iOS Style) ═══ */}
             <div className={`glass-search-container ${isSticky ? 'is-sticky' : ''}`}>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white/60 backdrop-blur-3xl p-4 md:p-2 rounded-[28px] border border-white/80 shadow-2xl shadow-slate-200/50">
                     <div className="flex items-center bg-white px-4 py-2.5 rounded-[22px] border border-slate-100 shadow-sm flex-1 md:w-80 group focus-within:border-orange-500/50 focus-within:shadow-[0_0_20px_rgba(249,115,22,0.1)] transition-all duration-300 relative">
@@ -160,7 +240,6 @@ const DevoteeList = () => {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                        {/* Status Filter */}
                         <div className="relative flex-1 md:flex-none">
                             <select
                                 aria-label="Filter status"
@@ -180,7 +259,6 @@ const DevoteeList = () => {
                             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
                         </div>
 
-                        {/* Add User Button - Compact icon on mobile */}
                         <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
@@ -195,83 +273,16 @@ const DevoteeList = () => {
             </div>
 
             <div className="glass-card overflow-hidden mt-8">
-                {/* ═══ MOBILE CARD VIEW (iOS Style) ═══ */}
                 <div className="md:hidden">
                     {currentRows.length > 0 ? (
-                        <div className="space-y-3 px-4">
-                            {currentRows.map((devotee, i) => (
-                                <div key={`mobile-row-${devotee.id}`} className="relative group overflow-hidden rounded-3xl">
-                                    {/* Action Backing (Hidden Underneath) */}
-                                    <div className="absolute inset-0 flex items-center justify-end px-6 gap-3 bg-slate-900/5 rounded-3xl">
-                                        <button 
-                                            onClick={() => {}} // Placeholder for quick actions
-                                            className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg active:scale-90 transition-transform"
-                                        >
-                                            <Search size={16} />
-                                        </button>
-                                        <button 
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                Haptics.heavyTap();
-                                                deleteDevotee(devotee.id);
-                                            }}
-                                            className="w-10 h-10 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-lg active:scale-90 transition-transform"
-                                        >
-                                            <X size={16} />
-                                        </button>
-                                    </div>
-
-                                    <motion.div
-                                        drag="x"
-                                        dragConstraints={{ left: -120, right: 0 }}
-                                        dragElastic={0.05}
-                                        dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
-                                        whileDrag={{ scale: 1.01 }}
-                                        onDragStart={() => window.isDragging = true}
-                                        onDragEnd={() => setTimeout(() => window.isDragging = false, 100)}
-                                        className="relative z-10"
-                                    >
-                                        <Link 
-                                            to={`/profile/${devotee.id}`} 
-                                            onClick={(e) => {
-                                                if (window.isDragging) {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                }
-                                            }}
-                                            className="flex items-center gap-4 p-5 glass-card !rounded-3xl border-white/80 active:bg-white/90 transition-colors"
-                                        >
-                                            {/* Letter avatar */}
-                                            <div className="w-12 h-12 rounded-[18px] bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-black text-[17px] shrink-0 shadow-lg shadow-orange-100 border border-white/40 active:scale-95 transition-transform">
-                                                {devotee.name?.charAt(0)?.toUpperCase()}
-                                            </div>
-                                            
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-baseline gap-2 mb-0.5">
-                                                    <p className="text-[16px] font-bold text-slate-900 truncate leading-tight">{devotee.name}</p>
-                                                    {devotee.isNirapara && (
-                                                        <span className="px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded-md text-[9px] font-black shrink-0 tracking-tighter uppercase">Nirapara</span>
-                                                    )}
-                                                </div>
-                                                <p className="text-[13px] font-medium text-slate-400 tabular-nums">{devotee.phone}</p>
-                                            </div>
-                                            
-                                            <div className="text-right shrink-0 mr-1">
-                                                <p className={`text-[15px] font-black tabular-nums ${Number(devotee.totalPending) > 0 ? 'text-rose-500' : 'text-emerald-600'}`}>
-                                                    ₹{(Number(devotee.totalPending) || 0).toLocaleString()}
-                                                </p>
-                                                <p className={`text-[10px] font-black uppercase tracking-widest mt-0.5 ${devotee.status === 'Paid' ? 'text-emerald-500' : 'text-orange-500'}`}>
-                                                    {devotee.status === 'Paid' ? t.paid : t.pending}
-                                                </p>
-                                            </div>
-                                            
-                                            {/* iOS chevron */}
-                                            <svg width="6" height="10" viewBox="0 0 6 10" fill="none" className="text-slate-300 shrink-0">
-                                                <path d="M1 1L5 5L1 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                            </svg>
-                                        </Link>
-                                    </motion.div>
-                                </div>
+                        <div className="space-y-3 px-4 py-4">
+                            {currentRows.map((devotee) => (
+                                <MobileDevoteeCard 
+                                    key={`mobile-row-${devotee.id}`} 
+                                    devotee={devotee} 
+                                    t={t} 
+                                    deleteDevotee={deleteDevotee} 
+                                />
                             ))}
                         </div>
                     ) : (
@@ -285,7 +296,6 @@ const DevoteeList = () => {
                     )}
                 </div>
 
-                {/* ═══ DESKTOP TABLE VIEW ═══ */}
                 <div className="hidden md:block overflow-x-auto relative min-h-[400px]">
                     <table className="w-full text-left border-collapse">
                          <thead>
@@ -304,7 +314,6 @@ const DevoteeList = () => {
                         <tbody className="divide-y divide-white/20">
                             <AnimatePresence mode="popLayout">
                                 {currentRows.map((devotee) => (
-
                                     <motion.tr
                                         initial={{ opacity: 0, x: -10 }}
                                         animate={{ opacity: 1, x: 0 }}
@@ -317,8 +326,8 @@ const DevoteeList = () => {
                                             <div className="flex flex-col gap-1">
                                                 <span className="font-mono text-[9px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded-md border border-slate-100 group-hover:bg-white transition-colors">#{devotee.id}</span>
                                                 {debugMode && (
-                                                    <span className="text-[8px] font-bold text-slate-300 font-mono truncate max-w-[60px]" title={devotee.user_id || 'No UUID'}>
-                                                        {devotee.user_id ? `UUID: ..${devotee.user_id.slice(-6)}` : 'LOCAL_ONLY'}
+                                                    <span className="text-[8px] font-bold text-emerald-400 font-mono uppercase tracking-widest" title={devotee.id}>
+                                                        Cloud Synced
                                                     </span>
                                                 )}
                                             </div>
@@ -414,46 +423,6 @@ const DevoteeList = () => {
                             );
                         })()}
                     </table>
-                    {filteredData.length === 0 && (
-                        devoteeData.length === 0 ? (
-                            /* Onboarding — database is empty */
-                            <div className="p-16 text-center max-w-md mx-auto">
-                                <div className="text-5xl mb-4">🕉</div>
-                                <h4 className="text-xl font-black text-slate-800 mb-2">{t.no_devotees_yet}</h4>
-                                <p className="text-sm text-slate-400 font-medium mb-8">{t.get_started_desc}</p>
-                                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                                    <input ref={excelInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={e => {
-                                        const file = e.target.files[0];
-                                        if (!file) return;
-                                        const reader = new FileReader();
-                                        reader.onload = ev => importFromExcel(new Uint8Array(ev.target.result));
-                                        reader.readAsArrayBuffer(file);
-                                        e.target.value = '';
-                                    }} />
-                                    <button onClick={() => excelInputRef.current?.click()} className="flex items-center justify-center gap-2 px-5 py-3 bg-white border border-slate-200 rounded-2xl font-bold text-sm text-slate-700 hover:bg-slate-50 hover:shadow-md transition-all">
-                                        <Download size={16} className="text-emerald-500" /> {t.import_excel || 'Import Excel'}
-                                    </button>
-                                    <button onClick={seedMockData} className="flex items-center justify-center gap-2 px-5 py-3 bg-orange-500 text-white rounded-2xl font-bold text-sm hover:bg-orange-600 shadow-lg shadow-orange-100 transition-all">
-                                        <UserPlus size={16} /> Load Demo Data
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            /* No results from search/filter */
-                            <div className="p-12 text-center">
-                                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Search size={32} className="text-slate-300" />
-                                </div>
-                                <h4 className="text-lg font-bold text-slate-800">{t.no_devotees_found || 'No devotees found'}</h4>
-                                <p className="text-sm text-slate-400">{t.adjust_filters}</p>
-                                {searchTerm && (
-                                    <button onClick={() => setSearchTerm('')} className="mt-4 px-4 py-2 bg-orange-50 text-orange-600 rounded-xl font-bold text-sm hover:bg-orange-100 transition-colors">
-                                        {t.clear_search}
-                                    </button>
-                                )}
-                            </div>
-                        )
-                    )}
                 </div>
 
                 {totalPages > 1 && (

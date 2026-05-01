@@ -298,7 +298,7 @@ const Dashboard = () => {
                         <Doughnut data={doughnutData} options={{ maintainAspectRatio: false, cutout: '75%' }} />
                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                             <p className="text-3xl font-black text-slate-800">
-                                {Math.round((Number(stats.totalPaid) / (Number(stats.totalExpected) || 1)) * 100)}%
+                                {Math.min(100, Math.round((Number(stats.totalPaid) / (Number(stats.totalExpected) || 1)) * 100))}%
                             </p>
                             <p className="text-[10px] uppercase font-bold text-slate-400 tracking-tighter">{t.collection_rate}</p>
                         </div>

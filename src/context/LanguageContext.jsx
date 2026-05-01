@@ -9,6 +9,7 @@ const translations = {
         settings: "Settings",
         logout: "Logout",
         other_nav: "Other",
+        user_manual: "User Manual",
         total_devotees: "Total Devotees",
         today_collection: "Today's Collection",
         total_collected: "Total Collected",
@@ -307,7 +308,9 @@ const translations = {
         reset_link_sent: "Reset link sent to your email!",
         passwords_dont_match: "Passwords do not match",
         password_too_short: "Password must be at least 6 characters",
-        password_reset_success: "Password updated successfully! Redirecting..."
+        password_reset_success: "Password updated successfully! Redirecting...",
+        reset_success_desc: "We have sent a secure password reset link to your email address. Please check your inbox and spam folder.",
+        back_to_login: "Back to Login"
     },
     ml: {
         dashboard: "ഡാഷ്ബോർഡ്",
@@ -317,6 +320,7 @@ const translations = {
         settings: "ക്രമീകരണങ്ങൾ",
         logout: "ലോഗൗട്ട്",
         other_nav: "മറ്റുള്ളവ",
+        user_manual: "യൂസർ മാനുവൽ",
         total_devotees: "ആകെ ഭക്തർ",
         today_collection: "ഇന്നത്തെ പിരിവ്",
         total_collected: "പിരിച്ചെടുത്ത തുക",
@@ -444,6 +448,7 @@ const translations = {
         excel_mgmt_desc: "സ്പ്രെഡ്ഷീറ്റുകൾ ഉപയോഗിച്ച് വിവരങ്ങൾ കൈകാര്യം ചെയ്യുക",
         excel_import_hint: "💡 \"Mobile\", \"Full Name\", \"Phone No\" തുടങ്ങിയവയും സ്വീകരിക്കും.",
         administrator: "അഡ്മിനിസ്ട്രേറ്റർ",
+        update_password: "പാസ്‌വേഡ് പുതുക്കുക",
         dangerous_actions_desc: "ഡാറ്റാബേസ് മെയിന്റനൻസ്",
         all_samples: "എല്ലാ സാമ്പിളുകളും",
         pooram_samples: "പൂരം സാമ്പിളുകൾ",
@@ -615,7 +620,9 @@ const translations = {
         reset_link_sent: "ലിങ്ക് നിങ്ങളുടെ ഇമെയിലിലേക്ക് അയച്ചു!",
         passwords_dont_match: "പാസ്‌വേഡുകൾ തമ്മിൽ ചേരുന്നില്ല",
         password_too_short: "കുറഞ്ഞത് 6 അക്ഷരങ്ങൾ വേണം",
-        password_reset_success: "പാസ്‌വേഡ് വിജയകരമായി മാറ്റി! മടങ്ങുന്നു..."
+        password_reset_success: "പാസ്‌വേഡ് വിജയകരമായി മാറ്റി! മടങ്ങുന്നു...",
+        reset_success_desc: "നിങ്ങളുടെ ഇമെയിലിലേക്ക് ഒരു പാസ്‌വേഡ് റീസെറ്റ് ലിങ്ക് അയച്ചിട്ടുണ്ട്. ദയവായി ഇൻബോക്സും സ്പാം ഫോൾഡറും പരിശോധിക്കുക.",
+        back_to_login: "തിരികെ ലോഗിൻ പേജിലേക്ക്"
     }
 };
 

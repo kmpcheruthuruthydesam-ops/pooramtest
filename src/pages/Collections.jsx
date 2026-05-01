@@ -11,7 +11,7 @@ const Collections = () => {
     const { t } = useLanguage();
     const [searchTerm, setSearchTerm] = useState('');
     const [timeFilter, setTimeFilter] = useState('all');
-    const [activeReceipt, setActiveReceipt] = useState(null);
+    const [activeReceiptId, setActiveReceiptId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 25;
 
@@ -24,6 +24,12 @@ const Collections = () => {
             }))
         ).sort((a, b) => new Date(b.date) - new Date(a.date));
     }, [devoteeData]);
+
+    // Fix: Make active receipt reactive to data changes
+    const activeReceipt = useMemo(() => {
+        if (!activeReceiptId) return null;
+        return allEvents.find(e => e.id === activeReceiptId);
+    }, [activeReceiptId, allEvents]);
 
     const todaysCollectionAmount = useMemo(() => {
         const now = new Date();
@@ -67,7 +73,7 @@ const Collections = () => {
     );
 
     // Fix 6: use Receipt preview modal
-    const handlePrint = (event) => setActiveReceipt(event);
+    const handlePrint = (event) => setActiveReceiptId(event.id);
 
     const filters = [
         { id: 'all',   label: t.all_time   },
@@ -93,7 +99,7 @@ const Collections = () => {
     const typeBreakdown = useMemo(() => {
         const map = {};
         filteredEvents.forEach(e => {
-            const key = e.type || 'General';
+            const key = e.type?.trim() || 'General';
             if (!map[key]) map[key] = { total: 0, count: 0 };
             map[key].total += Number(e.paid) || 0;
             map[key].count++;
@@ -108,6 +114,10 @@ const Collections = () => {
                     <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight mb-2">{t.collections_history}</h1>
                     <p className="text-slate-400 font-medium flex items-center gap-2">
                         <Calendar size={16} /> {t.collections_subtitle}
+                        <span className="ml-3 flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-100">
+                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                            Live Cloud Sync
+                        </span>
                     </p>
                 </div>
                 <button
@@ -216,8 +226,8 @@ const Collections = () => {
                                 >
                                     {/* Icon based on type */}
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                                        item.type === 'Pooram' ? 'bg-orange-100 text-orange-600' : 
-                                        item.type === 'Ayyappan Vilakku' ? 'bg-blue-100 text-blue-600' : 
+                                        item.type?.trim() === 'Pooram' ? 'bg-orange-100 text-orange-600' : 
+                                        item.type?.trim() === 'Ayyappan Vilakku' ? 'bg-blue-100 text-blue-600' : 
                                         'bg-purple-100 text-purple-600'
                                     }`}>
                                         <BadgeIndianRupee size={20} />
@@ -293,7 +303,7 @@ const Collections = () => {
                                         </td>
                                         <td className="px-8 py-5">
                                             <div className="flex items-center gap-3">
-                                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${item.type === 'Pooram' ? 'bg-orange-50 text-orange-600' : item.type === 'General' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'}`}>
+                                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${item.type?.trim() === 'Pooram' ? 'bg-orange-50 text-orange-600' : item.type?.trim() === 'General' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'}`}>
                                                     {item.type}
                                                 </span>
                                                 {item.book && (
@@ -398,7 +408,7 @@ const Collections = () => {
             </div>
 
             {/* Fix 6: Receipt preview modal */}
-            <Receipt data={activeReceipt} onClose={() => setActiveReceipt(null)} />
+            <Receipt data={activeReceipt} onClose={() => setActiveReceiptId(null)} />
         </div>
     );
 };

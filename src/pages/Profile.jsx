@@ -98,8 +98,8 @@ const Profile = () => {
         setDeletingEvent(null);
     };
 
-    const pooramEvents  = (devotee.events || []).filter(e => e.type === 'Pooram');
-    const ayyappanEvents = (devotee.events || []).filter(e => e.type === 'Ayyappan Vilakku');
+    const pooramEvents  = (devotee.events || []).filter(e => e.type?.toLowerCase().includes('pooram'));
+    const ayyappanEvents = (devotee.events || []).filter(e => e.type?.toLowerCase().includes('ayyappan') || e.type?.toLowerCase().includes('vilakku'));
 
     return (
         <div className="space-y-8 pb-12">
